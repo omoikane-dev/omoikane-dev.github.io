@@ -7,9 +7,37 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
+    <lastBuildDate>Wed, 17 Apr 2019 23:03:29 +0900</lastBuildDate>
     
 	<atom:link href="https://www.omoikane.dev/tags/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Ipv6</title>
+      <link>https://www.omoikane.dev/tags/ipv6/</link>
+      <pubDate>Wed, 17 Apr 2019 23:03:29 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/tags/ipv6/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Openbsd</title>
+      <link>https://www.omoikane.dev/tags/openbsd/</link>
+      <pubDate>Wed, 17 Apr 2019 23:03:29 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/tags/openbsd/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Vps</title>
+      <link>https://www.omoikane.dev/tags/vps/</link>
+      <pubDate>Wed, 17 Apr 2019 23:03:29 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/tags/vps/</guid>
+      <description></description>
+    </item>
     
   </channel>
 </rss>

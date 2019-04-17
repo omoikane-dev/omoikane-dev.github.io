@@ -7,8 +7,53 @@
 		<generator>Hugo -- gohugo.io</generator>
 		<language>en-us</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Wed, 17 Apr 2019 22:30:18 +0900</lastBuildDate>
+		<lastBuildDate>Wed, 17 Apr 2019 23:03:29 +0900</lastBuildDate>
 		<atom:link href="https://www.omoikane.dev/posts/index.xml" rel="self" type="application/rss+xml" />
+		
+		<item>
+			<title>OpenBSD6.4をインストールしたVPSでIPv6を使う際の注意</title>
+			<link>https://www.omoikane.dev/posts/openbsd-ipv6-sakura/</link>
+			<pubDate>Wed, 17 Apr 2019 23:03:29 +0900</pubDate>
+			
+			<guid>https://www.omoikane.dev/posts/openbsd-ipv6-sakura/</guid>
+			<description>TL;DR OpenBSD 6.4をインストールしたVPSでIPv6のデフォルトゲートウェイに接続できない時は、 SIIを無効にすること。例えば、さくらインターネット</description>
+			<content type="html"><![CDATA[
+
+<h2 id="tl-dr">TL;DR</h2>
+
+<p>OpenBSD 6.4をインストールしたVPSでIPv6のデフォルトゲートウェイに接続できない時は、
+SIIを無効にすること。例えば、さくらインターネットの場合、hostname.vio0は以下のようになる。</p>
+
+<pre><code>inet  203.0.113.23 255.255.254.0
+inet6 autoconf -autoconfprivacy -soii
+inet6 alias 2001:db8:102:3013:203:0:113:23 64
+up
+!route -nq add -inet6 default fe80::1%vio0
+</code></pre>
+
+<hr />
+
+<p>OpenBSDをインストールしたさくらVPSのインスタンスでIPv6の
+デフォルトゲートウェイと通信できなくてハマった。
+なんとか解決できたのでメモ。</p>
+
+<p>さくらVPSは、グローバルIPv6のIPを一つくれる。
+そのゲートウェイはfe80::1である。</p>
+
+<p>OpenBSD 6.3あたりから、Semantically Opaque Interface Identifiers (SOIIs) がデフォルトで有効になっている。
+SOIIとはSLAACアドレス（自動で設定されるリンクローカルアドレス）のインターフェース識別子(IID)にMACアドレスを使わずに、
+プレフィックスも使ってIIDを生成することで、リングローカルアドレスを生成するというもの（RFC7217）。</p>
+
+<p>以前は、MACアドレスだけからリンクローカルアドレスを生成していた（Modified EUI-64）ため、プレフィックスが変化しても
+リンクローカルアドレスから容易にMACアドレスが特定でき、プライバシーやセキュリティの問題があった。
+OpenBSDはそれをいやがって、SOIIをデフォルトで有効にしたのだろう。</p>
+
+<p>一方、さくらのゲートウェイは、IIDをMACアドレスから生成する昔ながらのModified EUI-64を前提にフィルタリングしている
+と思われる。そのため、SOIIで生成されたアドレスはフィルターされIPv6でインターネットに接続できなかったのだろう。</p>
+
+<p>SIIを無効にするには、上記の例のように、ifocnfigのオプションに、-siiをつける。詳細は、ifconfigのmanページを参照のこと。</p>
+]]></content>
+		</item>
 		
 		<item>
 			<title>blog restart</title>
