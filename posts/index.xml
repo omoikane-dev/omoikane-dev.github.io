@@ -305,7 +305,9 @@ oatpp::web::protocol::http::outgoing::Response を返す関数に展開される
 
 <span class="nf">clean</span><span class="o">:</span>
         rm -f app *.o
-</code></pre></div>]]></content>
+</code></pre></div>
+<p>Hub Fan!</p>
+]]></content>
 		</item>
 		
 		<item>
