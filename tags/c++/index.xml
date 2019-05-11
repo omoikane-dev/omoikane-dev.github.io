@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>C&#43;&#43; on omoikane.dev</title>
+    <link>https://www.omoikane.dev/tags/c&#43;&#43;/</link>
+    <description>Recent content in C&#43;&#43; on omoikane.dev</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
+    <lastBuildDate>Sat, 11 May 2019 22:03:29 +0900</lastBuildDate>
+    
+	<atom:link href="https://www.omoikane.dev/tags/c++/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>C&#43;&#43;のWeb Framework oat&#43;&#43; で Hello World</title>
+      <link>https://www.omoikane.dev/posts/oat&#43;&#43;/</link>
+      <pubDate>Sat, 11 May 2019 22:03:29 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/posts/oat&#43;&#43;/</guid>
+      <description>大きめのデータ（といっても100万点のオーダだけど）を扱うWebアプリを作りたいのだが Pythonだと遅いので、C++で書きたい。 ということ</description>
+    </item>
+    
+  </channel>
+</rss>
