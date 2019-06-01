@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Sat, 11 May 2019 22:03:29 +0900</lastBuildDate>
+    <lastBuildDate>Sat, 01 Jun 2019 19:05:29 +0900</lastBuildDate>
     
 	<atom:link href="https://www.omoikane.dev/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>OpenBSD6.5をuEFI対応PCにインストールする方法</title>
+      <link>https://www.omoikane.dev/posts/install-openbsd65/</link>
+      <pubDate>Sat, 01 Jun 2019 19:05:29 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/posts/install-openbsd65/</guid>
+      <description>OpenBSDのインストール記事が少ないということで、ちょうど6.5がリリースされたのでインストール記事を書いておく。 0. インストールメディア</description>
+    </item>
     
     <item>
       <title>C&#43;&#43;のWeb Framework oat&#43;&#43; で Hello World</title>
