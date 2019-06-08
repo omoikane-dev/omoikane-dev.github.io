@@ -6,19 +6,38 @@
 		<generator>Hugo -- gohugo.io</generator>
 		<language>en-us</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Sat, 01 Jun 2019 19:05:29 +0900</lastBuildDate>
+		<lastBuildDate>Sat, 08 Jun 2019 21:24:29 +0900</lastBuildDate>
 		<atom:link href="https://www.omoikane.dev/posts/index.xml" rel="self" type="application/rss+xml" />
 		
 		<item>
 			<title>OpenBSD6.5をuEFI対応PCにインストールする方法</title>
 			<link>https://www.omoikane.dev/posts/install-openbsd65/</link>
-			<pubDate>Sat, 01 Jun 2019 19:05:29 +0900</pubDate>
+			<pubDate>Sat, 08 Jun 2019 21:24:29 +0900</pubDate>
 			
 			<guid>https://www.omoikane.dev/posts/install-openbsd65/</guid>
-			<description>OpenBSDのインストール記事が少ないということで、ちょうど6.5がリリースされたのでインストール記事を書いておく。 0. インストールメディア</description>
+			<description>TLDR; OpenBSDのインストール記事が少ないということで、ちょうど6.5がリリースされたのでインストール記事を書いておく。 と思ったら、「Ope</description>
 			<content type="html"><![CDATA[
 
-<p>OpenBSDのインストール記事が少ないということで、ちょうど6.5がリリースされたのでインストール記事を書いておく。</p>
+<h2 id="tldr">TLDR;</h2>
+
+<ol>
+<li><p>OpenBSDのインストール記事が少ないということで、ちょうど6.5がリリースされたのでインストール記事を書いておく。
+と思ったら、「<a href="https://qiita.com/kinichiro/items/a2ed08d14d2d46e28fca">OpenBSD 6.5 のインストール</a>」という良記事があった。以下の２点以外同じなので、そちらを参照のこと。</p></li>
+
+<li><p>OpenBSDはuEFIからのブートをサポートしている。パーティションの作成時に、</p>
+
+<pre><code>Use (W)hole disk MBR, whole disk (G)PT, or (E)dit? [W]
+</code></pre>
+
+<p>と聞かれたら、<code>G</code>を選べばよい。</p></li>
+
+<li><p>ネットワークインターフェースのファームウェアがインストーラーに含まれていない場合でも、インストールが可能である。
+インストール完了後に、別途ダウンロードしてファームウェアをUSBメモリ等で転送し、<code>fw_update</code>コマンドでインストールすれば良い。</p></li>
+
+<li><p>今となっては、信じられないくらいチョー不親切に見えるCUIベースのインストーラーなので、VierualBox等の仮想マシンにインストールしてみると、練習ができて安心。</p></li>
+</ol>
+
+<hr />
 
 <h2 id="0-インストールメディアの作成">0. インストールメディアの作成</h2>
 
@@ -433,6 +452,22 @@ vmm-firmware-1.11.0p1.tgz: OK
 
 <pre><code>shutdown -r now
 </code></pre>
+
+<h3 id="2-2-システムのアップデート">2.2 システムのアップデート</h3>
+
+<p>リリース後に公開されたパッチを適用する。</p>
+
+<p><code>syspatch</code>コマンドを実行すると、自動で未適用のパッチを調べ、ダウンロードし、適用してくれる。</p>
+
+<pre><code>syspatch
+</code></pre>
+
+<p>パッケージの更新は、</p>
+
+<pre><code>pkg_add -u
+</code></pre>
+
+<p>で自動で行われる。</p>
 
 <p>Have Fun!</p>
 ]]></content>
