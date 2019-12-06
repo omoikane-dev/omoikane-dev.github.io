@@ -22,6 +22,15 @@
     </item>
     
     <item>
+      <title>OpenBSD6.5を暗号化パーティションにインストールする方法</title>
+      <link>https://www.omoikane.dev/posts/install-openbsd-in-encrypted-partition/</link>
+      <pubDate>Sat, 08 Jun 2019 21:24:29 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/posts/install-openbsd-in-encrypted-partition/</guid>
+      <description>TLDR; OpenBSDを、暗号化パーティションにインストールすることが可能である。 インストーラー実行時に、shellに落ちて暗号化パーティションを</description>
+    </item>
+    
+    <item>
       <title>C&#43;&#43;のWeb Framework oat&#43;&#43; で Hello World</title>
       <link>https://www.omoikane.dev/posts/oat&#43;&#43;/</link>
       <pubDate>Sat, 11 May 2019 22:03:29 +0900</pubDate>

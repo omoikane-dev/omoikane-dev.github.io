@@ -7,7 +7,6 @@
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<meta name="theme-color" content="#494f5c">
 	<meta name="msapplication-TileColor" content="#494f5c">
-
 <meta itemprop="name" content="C&#43;&#43;のWeb Framework oat&#43;&#43; で Hello World">
 <meta itemprop="description" content="大きめのデータ（といっても100万点のオーダだけど）を扱うWebアプリを作りたいのだが Pythonだと遅いので、C&#43;&#43;で書きたい。 ということ">
 
@@ -23,8 +22,8 @@
 <meta property="og:description" content="大きめのデータ（といっても100万点のオーダだけど）を扱うWebアプリを作りたいのだが Pythonだと遅いので、C&#43;&#43;で書きたい。 ということ" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.omoikane.dev/posts/oat&#43;&#43;/" />
-<meta property="article:published_time" content="2019-05-11T22:03:29&#43;09:00"/>
-<meta property="article:modified_time" content="2019-05-11T22:03:29&#43;09:00"/>
+<meta property="article:published_time" content="2019-05-11T22:03:29+09:00" />
+<meta property="article:modified_time" content="2019-05-11T22:03:29+09:00" />
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="C&#43;&#43;のWeb Framework oat&#43;&#43; で Hello World"/>
 <meta name="twitter:description" content="大きめのデータ（といっても100万点のオーダだけど）を扱うWebアプリを作りたいのだが Pythonだと遅いので、C&#43;&#43;で書きたい。 ということ"/>
@@ -37,7 +36,7 @@
 	<link rel="shortcut icon" href="/favicon.ico">
 
 	<title>C&#43;&#43;のWeb Framework oat&#43;&#43; で Hello World</title>
-	<link rel="stylesheet" href="https://www.omoikane.dev/css/style.min.31706917653d2b9e8410abd431f30ec4359a88a94fc87a63654779d87329edec.css" integrity="sha256-MXBpF2U9K56EEKvUMfMOxDWaiKlPyHpjZUd52HMp7ew=">
+	<link rel="stylesheet" href="https://www.omoikane.dev/css/style.min.6a2d94be52e9f033aff88558e28aa96de11244b0a70e7537f6c33589e8d2d124.css" integrity="sha256-ai2UvlLp8DOv+IVY4oqpbeESRLCnDnU39sM1iejS0SQ=">
 	
 </head>
 
@@ -182,8 +181,8 @@ git clone https://github.com/oatpp/oatpp <span class="o">&amp;&amp;</span> mkdir
 </code></pre></div>
 <p>OATPP_CREATE_COMPONENT マクロは、oatpp/core/macro/component.hpp で以下のように定義されている。</p>
 <div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="cp">#define OATPP_CREATE_COMPONENT(TYPE, NAME) \
-</span><span class="cp"></span><span class="n">oatpp</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">Environment</span><span class="o">::</span><span class="n">Component</span><span class="o">&lt;</span><span class="n">TYPE</span><span class="o">&gt;</span> <span class="n">NAME</span> <span class="o">=</span> <span class="n">oatpp</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">Environment</span><span class="o">::</span><span class="n">Component</span><span class="o">&lt;</span><span class="n">TYPE</span><span class="o">&gt;</span>
-</code></pre></div>
+</span><span class="cp">oatpp::base::Environment::Component&lt;TYPE&gt; NAME = oatpp::base::Environment::Component&lt;TYPE&gt;
+</span></code></pre></div>
 <p>変数を宣言しているだけでした。</p>
 
 <p>このクラスでは、ServerConnectionProvider、HttpRouter、HttpConnectionHandlerを作成している。</p>
@@ -364,7 +363,7 @@ oatpp::web::protocol::http::outgoing::Response を返す関数に展開される
 <span class="nf">clean</span><span class="o">:</span>
         rm -f app *.o
 </code></pre></div>
-<p>Hub Fan!</p>
+<p>Have Fan!</p>
 
 			</div>
 			<hr class="post-end">
@@ -398,8 +397,8 @@ oatpp::web::protocol::http::outgoing::Response を返す関数に展開される
 </nav>
 		</aside>
 		<div class="post-nav thin">
-			<a class="next-post" href="https://www.omoikane.dev/posts/install-openbsd65/">
-				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>OpenBSD6.5をuEFI対応PCにインストールする方法</span>
+			<a class="next-post" href="https://www.omoikane.dev/posts/install-openbsd-in-encrypted-partition/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>OpenBSD6.5を暗号化パーティションにインストールする方法</span>
 			</a>
 			<a class="prev-post" href="https://www.omoikane.dev/posts/openbsd-ipv6-sakura/">
 				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>OpenBSD6.4をインストールしたVPSでIPv6を使う際の注意</span>

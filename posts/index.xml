@@ -474,6 +474,56 @@ vmm-firmware-1.11.0p1.tgz: OK
 		</item>
 		
 		<item>
+			<title>OpenBSD6.5を暗号化パーティションにインストールする方法</title>
+			<link>https://www.omoikane.dev/posts/install-openbsd-in-encrypted-partition/</link>
+			<pubDate>Sat, 08 Jun 2019 21:24:29 +0900</pubDate>
+			
+			<guid>https://www.omoikane.dev/posts/install-openbsd-in-encrypted-partition/</guid>
+			<description>TLDR; OpenBSDを、暗号化パーティションにインストールすることが可能である。 インストーラー実行時に、shellに落ちて暗号化パーティションを</description>
+			<content type="html"><![CDATA[
+
+<h2 id="tldr">TLDR;</h2>
+
+<ul>
+<li><p>OpenBSDを、暗号化パーティションにインストールすることが可能である。</p></li>
+
+<li><p>インストーラー実行時に、shellに落ちて暗号化パーティションを作成し、そこにインストールすれば良い。</p></li>
+</ul>
+
+<hr />
+
+<p>PCの盗難や紛失に備え、システムがインストールされているファイルシステムを暗号化することがある。
+また、個人情報等が入ったストレージデバイスを廃棄時の事や、クラウド上のインスタンスにアタッチされているディスクは
+ただのファイルであることを考えると、暗号化しておいたほうが安心だったりする。</p>
+
+<p>OpenBSDもLinux同様、暗号化パーティションへのインストールをサポートしている。</p>
+
+<p>以下に、OpenBSDを暗号化パーティションにインストールする方法を示す。</p>
+
+<h2 id="1-暗号化パーティションの作成">1. 暗号化パーティションの作成</h2>
+
+<p>OpenBSDのインストーラを起動すると、まず</p>
+
+<pre><code>Welcome to the OpenBSD/amd64 6。5 installation program.
+(I)nstall, (U)pgrade, (A)utoinstall or (S)hell?
+</code></pre>
+
+<p>と聞かれる。ここで<code>S</code>を選択し、Shellに落ちて暗号化パーティションを作成する。</p>
+
+<h3 id="1-0-ディスク全体を乱数で埋める">1.0 ディスク全体を乱数で埋める</h3>
+
+<p>ディスク全体を一度乱数で埋めておくと、攻撃者にディスクイメージを取得されたとしても、解析が非常に困難になる。機微な情報を保存する必要がある場合は、ディスク全体を乱数で埋めておいたほうが良い。</p>
+
+<pre><code>dd if=/dev/urandom of=/dev/sd0 bs=1m
+</code></pre>
+
+<p>この処理には、非常に時間がかかる。乱数で埋める必要が無ければスキップしても問題ない。。</p>
+
+<h3 id="uefi-or-mbr">UEFI or MBR</h3>
+]]></content>
+		</item>
+		
+		<item>
 			<title>C&#43;&#43;のWeb Framework oat&#43;&#43; で Hello World</title>
 			<link>https://www.omoikane.dev/posts/oat&#43;&#43;/</link>
 			<pubDate>Sat, 11 May 2019 22:03:29 +0900</pubDate>
@@ -588,8 +638,8 @@ git clone https://github.com/oatpp/oatpp <span class="o">&amp;&amp;</span> mkdir
 </code></pre></div>
 <p>OATPP_CREATE_COMPONENT マクロは、oatpp/core/macro/component.hpp で以下のように定義されている。</p>
 <div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="cp">#define OATPP_CREATE_COMPONENT(TYPE, NAME) \
-</span><span class="cp"></span><span class="n">oatpp</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">Environment</span><span class="o">::</span><span class="n">Component</span><span class="o">&lt;</span><span class="n">TYPE</span><span class="o">&gt;</span> <span class="n">NAME</span> <span class="o">=</span> <span class="n">oatpp</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">Environment</span><span class="o">::</span><span class="n">Component</span><span class="o">&lt;</span><span class="n">TYPE</span><span class="o">&gt;</span>
-</code></pre></div>
+</span><span class="cp">oatpp::base::Environment::Component&lt;TYPE&gt; NAME = oatpp::base::Environment::Component&lt;TYPE&gt;
+</span></code></pre></div>
 <p>変数を宣言しているだけでした。</p>
 
 <p>このクラスでは、ServerConnectionProvider、HttpRouter、HttpConnectionHandlerを作成している。</p>
@@ -770,7 +820,7 @@ oatpp::web::protocol::http::outgoing::Response を返す関数に展開される
 <span class="nf">clean</span><span class="o">:</span>
         rm -f app *.o
 </code></pre></div>
-<p>Hub Fan!</p>
+<p>Have Fan!</p>
 ]]></content>
 		</item>
 		
