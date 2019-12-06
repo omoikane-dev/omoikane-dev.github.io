@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Sat, 08 Jun 2019 21:24:29 +0900</lastBuildDate>
+    <lastBuildDate>Sun, 08 Dec 2019 00:00:00 +0900</lastBuildDate>
     
 	<atom:link href="https://www.omoikane.dev/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>GDALでGCOM-Cの可視領域のデータからTrue Colorイメージを再構成してみた</title>
+      <link>https://www.omoikane.dev/posts/gcomc-gdal/</link>
+      <pubDate>Sun, 08 Dec 2019 00:00:00 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/posts/gcomc-gdal/</guid>
+      <description>この記事は、FOSS4G Advent Calendar 2019 の12月8日の記事です。 昨日の記事は、 northprintさんの「mapboxのMaps SDK for Androidでお</description>
+    </item>
     
     <item>
       <title>OpenBSD6.5をuEFI対応PCにインストールする方法</title>

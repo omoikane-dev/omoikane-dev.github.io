@@ -6,8 +6,207 @@
 		<generator>Hugo -- gohugo.io</generator>
 		<language>en-us</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Sat, 08 Jun 2019 21:24:29 +0900</lastBuildDate>
+		<lastBuildDate>Sun, 08 Dec 2019 00:00:00 +0900</lastBuildDate>
 		<atom:link href="https://www.omoikane.dev/posts/index.xml" rel="self" type="application/rss+xml" />
+		
+		<item>
+			<title>GDALでGCOM-Cの可視領域のデータからTrue Colorイメージを再構成してみた</title>
+			<link>https://www.omoikane.dev/posts/gcomc-gdal/</link>
+			<pubDate>Sun, 08 Dec 2019 00:00:00 +0900</pubDate>
+			
+			<guid>https://www.omoikane.dev/posts/gcomc-gdal/</guid>
+			<description>この記事は、FOSS4G Advent Calendar 2019 の12月8日の記事です。 昨日の記事は、 northprintさんの「mapboxのMaps SDK for Androidでお</description>
+			<content type="html"><![CDATA[
+
+<p>この記事は、<a href="https://qiita.com/advent-calendar/2019/foss4g">FOSS4G Advent Calendar 2019</a> の12月8日の記事です。
+昨日の記事は、 northprintさんの「<a href="https://northprint.net/?p=255">mapboxのMaps SDK for Androidでお好みのラスタータイルを表示する</a>」
+でした。</p>
+
+<h2 id="tl-dr">TL;DR</h2>
+
+<p>今回は2017年の12月に打ち上げられた、気候変動観測衛星「しきさい」(GCOM-C)の可視領域の数値データを、
+GDAL2.4で再構成することで、True Color Imageに再構成してみました。</p>
+
+<p>結果は、こんな感じになりました。(Original data provided by JAXA)
+<img src="./GC1SG1_20191201D01D.png" alt="" /></p>
+
+<p>欠損値は透明にしてあります。低軌道衛星なのでどうしても欠損値が多いですね。約2日で全球を観測できる衛星なので、
+データを合成すると全球の画像が作れるはずです。</p>
+
+<p>あと再構成プログラムをC++で書きましたが、Pythonのほうがよかったかも&hellip;</p>
+
+<h2 id="しきさい-の概要">「しきさい」の概要</h2>
+
+<p>気候変動観測衛星「しきさい」は、地球環境変動観測ミッション(GCOM)の陸域版の衛星です。
+GCOMは地球から放射される様々な光を長期間観測することで、地球の気候変動の監視と
+メカニズムの解明を目的としたプロジェクトです。水循環を観測するGCOM-Wと、気候変動を観測する
+GCOM-Cという二つの衛星で観測を行っています。</p>
+
+<p>GCOM-Cに搭載されている、SGLIという多波長光学放射計は、可視、近赤外、近紫外領域の
+19の観測波長帯を持っています。
+今回は、可視領域の観測データをTrue Colorイメージを作成してみます。</p>
+
+<h2 id="データの入手方法">データの入手方法</h2>
+
+<p>まずは、GCOM-Cのデータを入手しましょう。
+JaxaのG-Portal(<a href="https://gportal.jaxa.jp/gpr/">https://gportal.jaxa.jp/gpr/</a>) というページでユーザー登録をすると、FTPで
+データをダウンロードすることができます。また、G-PortalのWebサイトにログインすると
+データの検索や、フォーマット変換ができるようです。
+私はデータ変換を自動化する必要がある別の目的があるので、あえて自分でやることにします。
+詳しくは
+「<a href="https://gportal.jaxa.jp/gpr/assets/mng_upload/COMMON/upload/GPortalUserManual_ja.pdf">G-Portal 地球観測衛星データ提供システムユーザ向け取扱説明書</a>」と
+「<a href="https://gportal.jaxa.jp/gpr/assets/mng_upload/GCOM-C/GCOM-C_SHIKISAI_Data_Users_Handbook_jp.pdf">気候変動観測衛星「しきさい」(GCOM-C) データ利用ハンドブック</a>」を参照してください。</p>
+
+<p>それでは、FTPサーバにログインして、/standard/GCOM-C/GCOM-C.SGLI 以下にある、L3.LAND.RV03、L3.LAND.RV05、L3.LAND.RV07 から同じ日付のデータを
+ダウンロードします。</p>
+
+<p>今回は12月1日のデータを使用しました。ダウンロードしたファイルは以下のとおりです。</p>
+
+<ul>
+<li>GC1SG1_20191201D01D_D0000_3MSG_RV03F_1001.h5</li>
+<li>GC1SG1_20191201D01D_D0000_3MSG_RV05F_1001.h5</li>
+<li>GC1SG1_20191201D01D_D0000_3MSG_RV07F_1001.h5</li>
+</ul>
+
+<p>ファイル名の後ろのほうにある、RV03、RV05、RV07はプロダクトIDとよばれる観測から得られた物理量の種類を
+示すIDです。RVxxのIDを持つプロダクトは陸域の大気補正済みの反射率で、RV03が青、RV06が緑、RV07が赤の光に
+相当します。</p>
+
+<p>各データに関しては
+「<a href="https://gportal.jaxa.jp/gpr/assets/mng_upload/GCOM-C/SGLI_Higher_Level_Product_Format_Description_jp.pdf">SGLI高次プロダクト フォーマット説明書</a>」
+を参照してください。</p>
+
+<h2 id="データの再構成">データの再構成</h2>
+
+<p>では、ダウンロードしたデータを再構成していきます。ダウンロードしたファイルはHDF5という形式で保存されています。
+HDF5はデータやパラメータを階層的に保存できる形式で、観測値だけでなく観測した時間や、処理したアルゴリズム、パラメータ等も
+いっしょに一つのファイルに格納できるすぐれものです。このHDF5形式のファイルからデータを取り出して、GDALを使って
+GTiff形式に変換します。</p>
+
+<p>可視画像は、R、G、Bの3つピクセルから構成されています。GTiffでは、それぞれ別のバンドに格納すれば良いので、
+取り出したデータを各バンドにコピーするだけでOKです。簡単ですね。</p>
+
+<p>以下のプログラムは、HDF5とGDALのライブラリを使用しています。DebianやUbuntuを使用している方は、</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">$ sudo apt install libgdal-dev libhdf5-dev</code></pre></div>
+<p>で必要なライブラリをインストールすることができます。</p>
+
+<p>C++なので、あまりちょっととっつきにくいかもしれませんが、流れはコメントに書いたとおりです。
+同じ流れでPythonで書くことができるはずです。</p>
+<div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="c1">// GDALの初期化
+</span><span class="c1"></span>	<span class="n">GDALAllRegister</span><span class="p">();</span>
+	
+	<span class="c1">// Dataを格納する配列
+</span><span class="c1"></span>	<span class="n">uint16_t</span> <span class="n">data</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+
+	<span class="c1">// File名が長いので、定数化
+</span><span class="c1"></span>	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">RED</span>   <span class="o">=</span> <span class="s">&#34;GC1SG1_20191201D01D_D0000_3MSG_RV07F_1001.h5&#34;</span><span class="p">;</span>
+	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">GREEN</span> <span class="o">=</span> <span class="s">&#34;GC1SG1_20191201D01D_D0000_3MSG_RV03F_1001.h5&#34;</span><span class="p">;</span>
+	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">BLUE</span>  <span class="o">=</span> <span class="s">&#34;GC1SG1_20191201D01D_D0000_3MSG_RV05F_1001.h5&#34;</span><span class="p">;</span>
+
+
+	<span class="c1">// GDALのGTiffドライバを呼び出す
+</span><span class="c1"></span>	<span class="n">GDALDriver</span> <span class="o">*</span><span class="n">poDriver</span> <span class="o">=</span> <span class="n">GetGDALDriverManager</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="s">&#34;GTiff&#34;</span><span class="p">);</span>
+	<span class="c1">// 呼び出したドライバで、BANDを4つもったデータセットを作成
+</span><span class="c1"></span>	<span class="n">GDALDataset</span> <span class="o">*</span><span class="n">poDstDS</span> <span class="o">=</span> <span class="n">poDriver</span><span class="o">-&gt;</span><span class="n">Create</span><span class="p">(</span> <span class="s">&#34;out.tiff&#34;</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">GDT_Byte</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+
+	<span class="c1">// 1番目のバンドを取り出して
+</span><span class="c1"></span>	<span class="n">band</span> <span class="o">=</span> <span class="n">poDstDS</span><span class="o">-&gt;</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+	<span class="c1">// このバンドを赤に指定する
+</span><span class="c1"></span>	<span class="n">band</span><span class="o">-&gt;</span><span class="n">SetColorInterpretation</span><span class="p">(</span><span class="n">GCI_RedBand</span><span class="p">);</span>
+	<span class="c1">// HDF5からデータを読んでから
+</span><span class="c1"></span>	<span class="n">readData</span><span class="p">(</span><span class="n">RED</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="s">&#34;/Image_data/Rs_VN07_AVE&#34;</span><span class="p">);</span>
+	<span class="c1">// 取り出したバンドにコピーする。
+</span><span class="c1"></span>	<span class="n">copy2band</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">band</span><span class="p">);</span>
+
+	<span class="c1">// 2番目は緑。赤と同様
+</span><span class="c1"></span>	<span class="n">GDALRasterBand</span> <span class="o">*</span><span class="n">band</span> <span class="o">=</span> <span class="n">poDstDS</span><span class="o">-&gt;</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+	<span class="n">band</span><span class="o">-&gt;</span><span class="n">SetColorInterpretation</span><span class="p">(</span><span class="n">GCI_GreenBand</span><span class="p">);</span>
+	<span class="n">readData</span><span class="p">(</span><span class="n">GREEN</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="s">&#34;/Image_data/Rs_VN05_AVE&#34;</span><span class="p">);</span>
+	<span class="n">copy2band</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">band</span><span class="p">);</span>
+
+	<span class="c1">// 3番目は青。赤と同様
+</span><span class="c1"></span>	<span class="n">band</span> <span class="o">=</span> <span class="n">poDstDS</span><span class="o">-&gt;</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+	<span class="n">band</span><span class="o">-&gt;</span><span class="n">SetColorInterpretation</span><span class="p">(</span><span class="n">GCI_BlueBand</span><span class="p">);</span>
+	<span class="n">readData</span><span class="p">(</span><span class="n">BLUE</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="s">&#34;/Image_data/Rs_VN03_AVE&#34;</span><span class="p">);</span>
+	<span class="n">copy2band</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">band</span><span class="p">);</span>
+
+	<span class="c1">// 4番目はアルファチャンネル。欠損値を透明にする
+</span><span class="c1"></span>	<span class="n">band</span> <span class="o">=</span> <span class="n">poDstDS</span><span class="o">-&gt;</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span>
+	<span class="n">band</span><span class="o">-&gt;</span><span class="n">SetColorInterpretation</span><span class="p">(</span><span class="n">GCI_AlphaBand</span><span class="p">);</span>
+	<span class="n">genAlphaBand</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">band</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">);</span>
+
+	<span class="c1">// 最後にデータセットをクローズしてできあがり
+</span><span class="c1"></span>	<span class="n">GDALClose</span><span class="p">(</span><span class="n">poDstDS</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</code></pre></div>
+<p>HDFからデータを取り出すreadDataは、
+ただデータを取り出して、引数に指定されたアドレスにコピーしているだけです。が、
+使用しているHDFライブラリでは、DataSpaceにデータを格納するのがお作法のようです。
+コピーするためには、コピー元とコピー先の範囲を指定必要があります。
+変数spとmemspaceのselectAll関数を呼ぶことで、DataSpace全体を指定しています。</p>
+<div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">void</span> <span class="nf">readData</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">filename</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">dataset</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">H5File</span> <span class="n">file</span><span class="p">(</span><span class="n">filename</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">H5F_ACC_RDONLY</span><span class="p">);</span>
+    <span class="n">DataSet</span> <span class="n">ds</span> <span class="o">=</span> <span class="n">grp</span><span class="p">.</span><span class="n">openDataSet</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+
+    <span class="n">DataSpace</span> <span class="n">sp</span> <span class="o">=</span> <span class="n">ds</span><span class="p">.</span><span class="n">getSpace</span><span class="p">();</span>
+    <span class="k">const</span> <span class="kt">int</span> <span class="n">rank</span> <span class="o">=</span> <span class="n">sp</span><span class="p">.</span><span class="n">getSimpleExtentNdims</span><span class="p">();</span>
+    <span class="n">hsize_t</span> <span class="n">count</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="mi">1</span><span class="p">};</span>
+    <span class="n">hsize_t</span> <span class="n">offset</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
+    <span class="n">sp</span><span class="p">.</span><span class="n">selectAll</span><span class="p">();</span>
+
+    <span class="n">DataSpace</span> <span class="n">memspace</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">count</span><span class="p">);</span>
+    <span class="n">memspace</span><span class="p">.</span><span class="n">selectAll</span><span class="p">();</span>
+    <span class="n">ds</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">PredType</span><span class="o">::</span><span class="n">NATIVE_UINT16</span><span class="p">,</span> <span class="n">memspace</span><span class="p">,</span> <span class="n">sp</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>取り出したデータをbandにコピーするcopy2bandは、以下のとおりです。
+データをスキャンして、欠損値を意味する65535を0にして、
+14ビットのデータを6bit右シフトして8bitに丸めてたあと、bandにコピーしています。</p>
+<div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">void</span> <span class="nf">copy2band</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">GDALRasterBand</span> <span class="o">*</span><span class="n">band</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="c1">// dataを2次元配列としてアクセスしたいので、memcpyで配列にコピー
+</span><span class="c1"></span>	<span class="n">uint16_t</span> <span class="n">val</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+	<span class="n">memcpy</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uint16_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span> <span class="o">*</span> <span class="n">height</span><span class="p">);</span>
+    
+	<span class="n">uint8_t</span> <span class="n">pixel</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+
+	<span class="c1">// すべてのデータをスキャンしてデータサイズを8ビットに変換
+</span><span class="c1"></span>	<span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="n">HEIGHT</span><span class="p">;</span> <span class="n">y</span><span class="o">++</span><span class="p">)</span>
+		<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">width</span><span class="p">;</span> <span class="n">x</span><span class="o">++</span><span class="p">)</span>
+			<span class="n">pixel</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">==</span> <span class="mi">65535</span><span class="p">)</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">&gt;&gt;</span> <span class="mi">6</span><span class="p">);</span>
+	<span class="c1">// バンドにコピー
+</span><span class="c1"></span>	<span class="n">band</span><span class="o">-&gt;</span><span class="n">RasterIO</span><span class="p">(</span><span class="n">GF_Write</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">pixel</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">GDT_Byte</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>最後にアルファチャンネルを生成しているgenAlphaBand関数はこんな感じにしました。</p>
+<div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">void</span> <span class="nf">genAlphaBand</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">GDALRasterBand</span> <span class="o">*</span><span class="n">band</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="n">uint16_t</span> <span class="n">val</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+        <span class="n">memcpy</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uint16_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">WIDTH</span> <span class="o">*</span> <span class="n">HEIGHT</span><span class="p">);</span>
+        <span class="n">uint8_t</span> <span class="n">tmp</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+        <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="n">HEIGHT</span><span class="p">;</span> <span class="n">y</span><span class="o">++</span><span class="p">)</span>
+                <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">WIDTH</span><span class="p">;</span> <span class="n">x</span><span class="o">++</span><span class="p">){</span>
+                        <span class="n">tmp</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">==</span> <span class="mi">65535</span><span class="p">)</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="mi">255</span><span class="p">;</span>
+                <span class="p">}</span>
+        <span class="n">band</span><span class="o">-&gt;</span><span class="n">RasterIO</span><span class="p">(</span><span class="n">GF_Write</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">tmp</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">GDT_Byte</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>ほぼcopy2bandと同じです。違うのは欠損値だった場合は値を0、そうでないときは255を使用しているだけです。
+ここもそうですが、全体的にリファクタリングの余地がありますね。</p>
+
+<p>結果はTL;DRのところに載せたとおりです。
+実行する時は、確実にスタック領域が不足するので、ulimitコマンドでスタック領域を無制限にすることを忘れずに。
+さもないとSegmentation Faultで落ちますので。</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">$ <span class="nb">ulimit</span> -s unlimited</code></pre></div>
+<p>低軌道衛星なのでどうしても欠損値がありますが、約2日で全球を観測できる衛星なので、
+2日分のデータを合成すると全球の画像が作れると思います。まぁ後日やることにしましょう。</p>
+
+<p>明日は、Kanahiroさんの記事です。</p>
+]]></content>
+		</item>
 		
 		<item>
 			<title>OpenBSD6.5をuEFI対応PCにインストールする方法</title>

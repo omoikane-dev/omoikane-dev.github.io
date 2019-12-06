@@ -7,10 +7,37 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Sat, 08 Jun 2019 21:24:29 +0900</lastBuildDate>
+    <lastBuildDate>Sun, 08 Dec 2019 00:00:00 +0900</lastBuildDate>
     
 	<atom:link href="https://www.omoikane.dev/tags/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>GCOM-C</title>
+      <link>https://www.omoikane.dev/tags/gcom-c/</link>
+      <pubDate>Sun, 08 Dec 2019 00:00:00 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/tags/gcom-c/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>gdal</title>
+      <link>https://www.omoikane.dev/tags/gdal/</link>
+      <pubDate>Sun, 08 Dec 2019 00:00:00 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/tags/gdal/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>GIS</title>
+      <link>https://www.omoikane.dev/tags/gis/</link>
+      <pubDate>Sun, 08 Dec 2019 00:00:00 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/tags/gis/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>OpenBSD</title>

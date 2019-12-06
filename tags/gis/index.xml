@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>GIS on omoikane.dev</title>
+    <link>https://www.omoikane.dev/tags/gis/</link>
+    <description>Recent content in GIS on omoikane.dev</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
+    <lastBuildDate>Sun, 08 Dec 2019 00:00:00 +0900</lastBuildDate>
+    
+	<atom:link href="https://www.omoikane.dev/tags/gis/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>GDALでGCOM-Cの可視領域のデータからTrue Colorイメージを再構成してみた</title>
+      <link>https://www.omoikane.dev/posts/gcomc-gdal/</link>
+      <pubDate>Sun, 08 Dec 2019 00:00:00 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/posts/gcomc-gdal/</guid>
+      <description>この記事は、FOSS4G Advent Calendar 2019 の12月8日の記事です。 昨日の記事は、 northprintさんの「mapboxのMaps SDK for Androidでお</description>
+    </item>
+    
+  </channel>
+</rss>

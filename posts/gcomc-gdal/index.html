@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+<meta itemprop="name" content="GDALでGCOM-Cの可視領域のデータからTrue Colorイメージを再構成してみた">
+<meta itemprop="description" content="この記事は、FOSS4G Advent Calendar 2019 の12月8日の記事です。 昨日の記事は、 northprintさんの「mapboxのMaps SDK for Androidでお">
+
+
+<meta itemprop="datePublished" content="2019-12-08T00:00:00&#43;09:00" />
+<meta itemprop="dateModified" content="2019-12-08T00:00:00&#43;09:00" />
+<meta itemprop="wordCount" content="2852">
+
+
+
+<meta itemprop="keywords" content="gdal,GIS,GCOM-C," />
+<meta property="og:title" content="GDALでGCOM-Cの可視領域のデータからTrue Colorイメージを再構成してみた" />
+<meta property="og:description" content="この記事は、FOSS4G Advent Calendar 2019 の12月8日の記事です。 昨日の記事は、 northprintさんの「mapboxのMaps SDK for Androidでお" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.omoikane.dev/posts/gcomc-gdal/" />
+<meta property="article:published_time" content="2019-12-08T00:00:00+09:00" />
+<meta property="article:modified_time" content="2019-12-08T00:00:00+09:00" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="GDALでGCOM-Cの可視領域のデータからTrue Colorイメージを再構成してみた"/>
+<meta name="twitter:description" content="この記事は、FOSS4G Advent Calendar 2019 の12月8日の記事です。 昨日の記事は、 northprintさんの「mapboxのMaps SDK for Androidでお"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>GDALでGCOM-Cの可視領域のデータからTrue Colorイメージを再構成してみた</title>
+	<link rel="stylesheet" href="https://www.omoikane.dev/css/style.min.6a2d94be52e9f033aff88558e28aa96de11244b0a70e7537f6c33589e8d2d124.css" integrity="sha256-ai2UvlLp8DOv+IVY4oqpbeESRLCnDnU39sM1iejS0SQ=">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://www.omoikane.dev">omoikane.dev</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://www.omoikane.dev/posts/">Posts</a>
+					<a href="https://www.omoikane.dev/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://twitter.com/jm6xxu" target="_blank" rel="noopener" title="Twitter"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-twitter"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg></a><a href="https://github.com/chomy" target="_blank" rel="noopener" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://www.omoikane.dev/posts/">Posts</a></li>
+			<li><a href="https://www.omoikane.dev/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Dec 8, 2019</span></div>
+				<h1>GDALでGCOM-Cの可視領域のデータからTrue Colorイメージを再構成してみた</h1>
+			</header>
+			<div class="content">
+				
+
+<p>この記事は、<a href="https://qiita.com/advent-calendar/2019/foss4g">FOSS4G Advent Calendar 2019</a> の12月8日の記事です。
+昨日の記事は、 northprintさんの「<a href="https://northprint.net/?p=255">mapboxのMaps SDK for Androidでお好みのラスタータイルを表示する</a>」
+でした。</p>
+
+<h2 id="tl-dr">TL;DR<a href="#tl-dr" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<p>今回は2017年の12月に打ち上げられた、気候変動観測衛星「しきさい」(GCOM-C)の可視領域の数値データを、
+GDAL2.4で再構成することで、True Color Imageに再構成してみました。</p>
+
+<p>結果は、こんな感じになりました。(Original data provided by JAXA)
+<img src="./GC1SG1_20191201D01D.png" alt="" /></p>
+
+<p>欠損値は透明にしてあります。低軌道衛星なのでどうしても欠損値が多いですね。約2日で全球を観測できる衛星なので、
+データを合成すると全球の画像が作れるはずです。</p>
+
+<p>あと再構成プログラムをC++で書きましたが、Pythonのほうがよかったかも&hellip;</p>
+
+<h2 id="しきさい-の概要">「しきさい」の概要<a href="#しきさい-の概要" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<p>気候変動観測衛星「しきさい」は、地球環境変動観測ミッション(GCOM)の陸域版の衛星です。
+GCOMは地球から放射される様々な光を長期間観測することで、地球の気候変動の監視と
+メカニズムの解明を目的としたプロジェクトです。水循環を観測するGCOM-Wと、気候変動を観測する
+GCOM-Cという二つの衛星で観測を行っています。</p>
+
+<p>GCOM-Cに搭載されている、SGLIという多波長光学放射計は、可視、近赤外、近紫外領域の
+19の観測波長帯を持っています。
+今回は、可視領域の観測データをTrue Colorイメージを作成してみます。</p>
+
+<h2 id="データの入手方法">データの入手方法<a href="#データの入手方法" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<p>まずは、GCOM-Cのデータを入手しましょう。
+JaxaのG-Portal(<a href="https://gportal.jaxa.jp/gpr/">https://gportal.jaxa.jp/gpr/</a>) というページでユーザー登録をすると、FTPで
+データをダウンロードすることができます。また、G-PortalのWebサイトにログインすると
+データの検索や、フォーマット変換ができるようです。
+私はデータ変換を自動化する必要がある別の目的があるので、あえて自分でやることにします。
+詳しくは
+「<a href="https://gportal.jaxa.jp/gpr/assets/mng_upload/COMMON/upload/GPortalUserManual_ja.pdf">G-Portal 地球観測衛星データ提供システムユーザ向け取扱説明書</a>」と
+「<a href="https://gportal.jaxa.jp/gpr/assets/mng_upload/GCOM-C/GCOM-C_SHIKISAI_Data_Users_Handbook_jp.pdf">気候変動観測衛星「しきさい」(GCOM-C) データ利用ハンドブック</a>」を参照してください。</p>
+
+<p>それでは、FTPサーバにログインして、/standard/GCOM-C/GCOM-C.SGLI 以下にある、L3.LAND.RV03、L3.LAND.RV05、L3.LAND.RV07 から同じ日付のデータを
+ダウンロードします。</p>
+
+<p>今回は12月1日のデータを使用しました。ダウンロードしたファイルは以下のとおりです。</p>
+
+<ul>
+<li>GC1SG1_20191201D01D_D0000_3MSG_RV03F_1001.h5</li>
+<li>GC1SG1_20191201D01D_D0000_3MSG_RV05F_1001.h5</li>
+<li>GC1SG1_20191201D01D_D0000_3MSG_RV07F_1001.h5</li>
+</ul>
+
+<p>ファイル名の後ろのほうにある、RV03、RV05、RV07はプロダクトIDとよばれる観測から得られた物理量の種類を
+示すIDです。RVxxのIDを持つプロダクトは陸域の大気補正済みの反射率で、RV03が青、RV06が緑、RV07が赤の光に
+相当します。</p>
+
+<p>各データに関しては
+「<a href="https://gportal.jaxa.jp/gpr/assets/mng_upload/GCOM-C/SGLI_Higher_Level_Product_Format_Description_jp.pdf">SGLI高次プロダクト フォーマット説明書</a>」
+を参照してください。</p>
+
+<h2 id="データの再構成">データの再構成<a href="#データの再構成" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<p>では、ダウンロードしたデータを再構成していきます。ダウンロードしたファイルはHDF5という形式で保存されています。
+HDF5はデータやパラメータを階層的に保存できる形式で、観測値だけでなく観測した時間や、処理したアルゴリズム、パラメータ等も
+いっしょに一つのファイルに格納できるすぐれものです。このHDF5形式のファイルからデータを取り出して、GDALを使って
+GTiff形式に変換します。</p>
+
+<p>可視画像は、R、G、Bの3つピクセルから構成されています。GTiffでは、それぞれ別のバンドに格納すれば良いので、
+取り出したデータを各バンドにコピーするだけでOKです。簡単ですね。</p>
+
+<p>以下のプログラムは、HDF5とGDALのライブラリを使用しています。DebianやUbuntuを使用している方は、</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">$ sudo apt install libgdal-dev libhdf5-dev</code></pre></div>
+<p>で必要なライブラリをインストールすることができます。</p>
+
+<p>C++なので、あまりちょっととっつきにくいかもしれませんが、流れはコメントに書いたとおりです。
+同じ流れでPythonで書くことができるはずです。</p>
+<div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="c1">// GDALの初期化
+</span><span class="c1"></span>	<span class="n">GDALAllRegister</span><span class="p">();</span>
+	
+	<span class="c1">// Dataを格納する配列
+</span><span class="c1"></span>	<span class="n">uint16_t</span> <span class="n">data</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+
+	<span class="c1">// File名が長いので、定数化
+</span><span class="c1"></span>	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">RED</span>   <span class="o">=</span> <span class="s">&#34;GC1SG1_20191201D01D_D0000_3MSG_RV07F_1001.h5&#34;</span><span class="p">;</span>
+	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">GREEN</span> <span class="o">=</span> <span class="s">&#34;GC1SG1_20191201D01D_D0000_3MSG_RV03F_1001.h5&#34;</span><span class="p">;</span>
+	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">BLUE</span>  <span class="o">=</span> <span class="s">&#34;GC1SG1_20191201D01D_D0000_3MSG_RV05F_1001.h5&#34;</span><span class="p">;</span>
+
+
+	<span class="c1">// GDALのGTiffドライバを呼び出す
+</span><span class="c1"></span>	<span class="n">GDALDriver</span> <span class="o">*</span><span class="n">poDriver</span> <span class="o">=</span> <span class="n">GetGDALDriverManager</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="s">&#34;GTiff&#34;</span><span class="p">);</span>
+	<span class="c1">// 呼び出したドライバで、BANDを4つもったデータセットを作成
+</span><span class="c1"></span>	<span class="n">GDALDataset</span> <span class="o">*</span><span class="n">poDstDS</span> <span class="o">=</span> <span class="n">poDriver</span><span class="o">-&gt;</span><span class="n">Create</span><span class="p">(</span> <span class="s">&#34;out.tiff&#34;</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">GDT_Byte</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+
+	<span class="c1">// 1番目のバンドを取り出して
+</span><span class="c1"></span>	<span class="n">band</span> <span class="o">=</span> <span class="n">poDstDS</span><span class="o">-&gt;</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+	<span class="c1">// このバンドを赤に指定する
+</span><span class="c1"></span>	<span class="n">band</span><span class="o">-&gt;</span><span class="n">SetColorInterpretation</span><span class="p">(</span><span class="n">GCI_RedBand</span><span class="p">);</span>
+	<span class="c1">// HDF5からデータを読んでから
+</span><span class="c1"></span>	<span class="n">readData</span><span class="p">(</span><span class="n">RED</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="s">&#34;/Image_data/Rs_VN07_AVE&#34;</span><span class="p">);</span>
+	<span class="c1">// 取り出したバンドにコピーする。
+</span><span class="c1"></span>	<span class="n">copy2band</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">band</span><span class="p">);</span>
+
+	<span class="c1">// 2番目は緑。赤と同様
+</span><span class="c1"></span>	<span class="n">GDALRasterBand</span> <span class="o">*</span><span class="n">band</span> <span class="o">=</span> <span class="n">poDstDS</span><span class="o">-&gt;</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+	<span class="n">band</span><span class="o">-&gt;</span><span class="n">SetColorInterpretation</span><span class="p">(</span><span class="n">GCI_GreenBand</span><span class="p">);</span>
+	<span class="n">readData</span><span class="p">(</span><span class="n">GREEN</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="s">&#34;/Image_data/Rs_VN05_AVE&#34;</span><span class="p">);</span>
+	<span class="n">copy2band</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">band</span><span class="p">);</span>
+
+	<span class="c1">// 3番目は青。赤と同様
+</span><span class="c1"></span>	<span class="n">band</span> <span class="o">=</span> <span class="n">poDstDS</span><span class="o">-&gt;</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+	<span class="n">band</span><span class="o">-&gt;</span><span class="n">SetColorInterpretation</span><span class="p">(</span><span class="n">GCI_BlueBand</span><span class="p">);</span>
+	<span class="n">readData</span><span class="p">(</span><span class="n">BLUE</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="s">&#34;/Image_data/Rs_VN03_AVE&#34;</span><span class="p">);</span>
+	<span class="n">copy2band</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">band</span><span class="p">);</span>
+
+	<span class="c1">// 4番目はアルファチャンネル。欠損値を透明にする
+</span><span class="c1"></span>	<span class="n">band</span> <span class="o">=</span> <span class="n">poDstDS</span><span class="o">-&gt;</span><span class="n">GetRasterBand</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span>
+	<span class="n">band</span><span class="o">-&gt;</span><span class="n">SetColorInterpretation</span><span class="p">(</span><span class="n">GCI_AlphaBand</span><span class="p">);</span>
+	<span class="n">genAlphaBand</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">band</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">);</span>
+
+	<span class="c1">// 最後にデータセットをクローズしてできあがり
+</span><span class="c1"></span>	<span class="n">GDALClose</span><span class="p">(</span><span class="n">poDstDS</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</code></pre></div>
+<p>HDFからデータを取り出すreadDataは、
+ただデータを取り出して、引数に指定されたアドレスにコピーしているだけです。が、
+使用しているHDFライブラリでは、DataSpaceにデータを格納するのがお作法のようです。
+コピーするためには、コピー元とコピー先の範囲を指定必要があります。
+変数spとmemspaceのselectAll関数を呼ぶことで、DataSpace全体を指定しています。</p>
+<div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">void</span> <span class="nf">readData</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">filename</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">dataset</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">H5File</span> <span class="n">file</span><span class="p">(</span><span class="n">filename</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">H5F_ACC_RDONLY</span><span class="p">);</span>
+    <span class="n">DataSet</span> <span class="n">ds</span> <span class="o">=</span> <span class="n">grp</span><span class="p">.</span><span class="n">openDataSet</span><span class="p">(</span><span class="n">dataset</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+
+    <span class="n">DataSpace</span> <span class="n">sp</span> <span class="o">=</span> <span class="n">ds</span><span class="p">.</span><span class="n">getSpace</span><span class="p">();</span>
+    <span class="k">const</span> <span class="kt">int</span> <span class="n">rank</span> <span class="o">=</span> <span class="n">sp</span><span class="p">.</span><span class="n">getSimpleExtentNdims</span><span class="p">();</span>
+    <span class="n">hsize_t</span> <span class="n">count</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="mi">1</span><span class="p">};</span>
+    <span class="n">hsize_t</span> <span class="n">offset</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">};</span>
+    <span class="n">sp</span><span class="p">.</span><span class="n">selectAll</span><span class="p">();</span>
+
+    <span class="n">DataSpace</span> <span class="n">memspace</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">count</span><span class="p">);</span>
+    <span class="n">memspace</span><span class="p">.</span><span class="n">selectAll</span><span class="p">();</span>
+    <span class="n">ds</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">PredType</span><span class="o">::</span><span class="n">NATIVE_UINT16</span><span class="p">,</span> <span class="n">memspace</span><span class="p">,</span> <span class="n">sp</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>取り出したデータをbandにコピーするcopy2bandは、以下のとおりです。
+データをスキャンして、欠損値を意味する65535を0にして、
+14ビットのデータを6bit右シフトして8bitに丸めてたあと、bandにコピーしています。</p>
+<div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">void</span> <span class="nf">copy2band</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">GDALRasterBand</span> <span class="o">*</span><span class="n">band</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="c1">// dataを2次元配列としてアクセスしたいので、memcpyで配列にコピー
+</span><span class="c1"></span>	<span class="n">uint16_t</span> <span class="n">val</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+	<span class="n">memcpy</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uint16_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span> <span class="o">*</span> <span class="n">height</span><span class="p">);</span>
+    
+	<span class="n">uint8_t</span> <span class="n">pixel</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+
+	<span class="c1">// すべてのデータをスキャンしてデータサイズを8ビットに変換
+</span><span class="c1"></span>	<span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="n">HEIGHT</span><span class="p">;</span> <span class="n">y</span><span class="o">++</span><span class="p">)</span>
+		<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">width</span><span class="p">;</span> <span class="n">x</span><span class="o">++</span><span class="p">)</span>
+			<span class="n">pixel</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">==</span> <span class="mi">65535</span><span class="p">)</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">&gt;&gt;</span> <span class="mi">6</span><span class="p">);</span>
+	<span class="c1">// バンドにコピー
+</span><span class="c1"></span>	<span class="n">band</span><span class="o">-&gt;</span><span class="n">RasterIO</span><span class="p">(</span><span class="n">GF_Write</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">pixel</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">GDT_Byte</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>最後にアルファチャンネルを生成しているgenAlphaBand関数はこんな感じにしました。</p>
+<div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">void</span> <span class="nf">genAlphaBand</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">GDALRasterBand</span> <span class="o">*</span><span class="n">band</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="n">uint16_t</span> <span class="n">val</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+        <span class="n">memcpy</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uint16_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">WIDTH</span> <span class="o">*</span> <span class="n">HEIGHT</span><span class="p">);</span>
+        <span class="n">uint8_t</span> <span class="n">tmp</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+        <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="n">HEIGHT</span><span class="p">;</span> <span class="n">y</span><span class="o">++</span><span class="p">)</span>
+                <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">WIDTH</span><span class="p">;</span> <span class="n">x</span><span class="o">++</span><span class="p">){</span>
+                        <span class="n">tmp</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">==</span> <span class="mi">65535</span><span class="p">)</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="mi">255</span><span class="p">;</span>
+                <span class="p">}</span>
+        <span class="n">band</span><span class="o">-&gt;</span><span class="n">RasterIO</span><span class="p">(</span><span class="n">GF_Write</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">tmp</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">GDT_Byte</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>ほぼcopy2bandと同じです。違うのは欠損値だった場合は値を0、そうでないときは255を使用しているだけです。
+ここもそうですが、全体的にリファクタリングの余地がありますね。</p>
+
+<p>結果はTL;DRのところに載せたとおりです。
+実行する時は、確実にスタック領域が不足するので、ulimitコマンドでスタック領域を無制限にすることを忘れずに。
+さもないとSegmentation Faultで落ちますので。</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">$ <span class="nb">ulimit</span> -s unlimited</code></pre></div>
+<p>低軌道衛星なのでどうしても欠損値がありますが、約2日で全球を観測できる衛星なので、
+2日分のデータを合成すると全球の画像が作れると思います。まぁ後日やることにしましょう。</p>
+
+<p>明日は、Kanahiroさんの記事です。</p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://www.omoikane.dev/tags/gdal">gdal</a></span><span class="tag"><a href="https://www.omoikane.dev/tags/gis">GIS</a></span><span class="tag"><a href="https://www.omoikane.dev/tags/gcom-c">GCOM-C</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>2852 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2019-12-08 00:00 &#43;0900</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="prev-post" href="https://www.omoikane.dev/posts/install-openbsd65/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>OpenBSD6.5をuEFI対応PCにインストールする方法</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2019 <a href="https://www.omoikane.dev">omoikane</a> &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://www.omoikane.dev/posts/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://www.omoikane.dev/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js" integrity="sha256-eEQX9YRxUfhIwznPCssToGy7ZIsUg0NaKO1FVsTq1ps="></script>
+
+</body>
+
+</html>
