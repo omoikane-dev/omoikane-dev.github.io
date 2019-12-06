@@ -27,11 +27,10 @@
 <p>今回は2017年の12月に打ち上げられた、気候変動観測衛星「しきさい」(GCOM-C)の可視領域の数値データを、
 GDAL2.4で再構成することで、True Color Imageに再構成してみました。</p>
 
-<p>結果は、こんな感じになりました。(Original data provided by JAXA)
-<img src="./GC1SG1_20191201D01D.png" alt="" /></p>
+<p>結果は、こんな感じになりました。欠損値は透明にしてあります。</p>
 
-<p>欠損値は透明にしてあります。低軌道衛星なのでどうしても欠損値が多いですね。約2日で全球を観測できる衛星なので、
-データを合成すると全球の画像が作れるはずです。</p>
+<p><img src="./GC1SG1_20191101D01M.png" alt="" />
+(Original data provided by JAXA)</p>
 
 <p>あと再構成プログラムをC++で書きましたが、Pythonのほうがよかったかも&hellip;</p>
 
@@ -40,18 +39,18 @@ GDAL2.4で再構成することで、True Color Imageに再構成してみまし
 <p>気候変動観測衛星「しきさい」は、地球環境変動観測ミッション(GCOM)の陸域版の衛星です。
 GCOMは地球から放射される様々な光を長期間観測することで、地球の気候変動の監視と
 メカニズムの解明を目的としたプロジェクトです。水循環を観測するGCOM-Wと、気候変動を観測する
-GCOM-Cという二つの衛星で観測を行っています。</p>
+GCOM-Cという二つの衛星で観測を行っています。
+GCOM-Cに搭載されている、SGLIという多波長光学放射計は、可視、近赤外、近紫外領域の
+19の観測波長帯を持っています。</p>
 
-<p>GCOM-Cに搭載されている、SGLIという多波長光学放射計は、可視、近赤外、近紫外領域の
-19の観測波長帯を持っています。
-今回は、可視領域の観測データをTrue Colorイメージを作成してみます。</p>
+<p>今回は、可視領域の観測データをTrue Colorイメージを作成してみます。</p>
 
 <h2 id="データの入手方法">データの入手方法</h2>
 
-<p>まずは、GCOM-Cのデータを入手しましょう。
+<p>まずは、GCOM-Cの観測データを入手しましょう。
 JaxaのG-Portal(<a href="https://gportal.jaxa.jp/gpr/">https://gportal.jaxa.jp/gpr/</a>) というページでユーザー登録をすると、FTPで
 データをダウンロードすることができます。また、G-PortalのWebサイトにログインすると
-データの検索や、フォーマット変換ができるようです。
+データの検索やダウンロード、フォーマット変換ができるようです。
 私はデータ変換を自動化する必要がある別の目的があるので、あえて自分でやることにします。
 詳しくは
 「<a href="https://gportal.jaxa.jp/gpr/assets/mng_upload/COMMON/upload/GPortalUserManual_ja.pdf">G-Portal 地球観測衛星データ提供システムユーザ向け取扱説明書</a>」と
@@ -60,12 +59,12 @@ JaxaのG-Portal(<a href="https://gportal.jaxa.jp/gpr/">https://gportal.jaxa.jp/g
 <p>それでは、FTPサーバにログインして、/standard/GCOM-C/GCOM-C.SGLI 以下にある、L3.LAND.RV03、L3.LAND.RV05、L3.LAND.RV07 から同じ日付のデータを
 ダウンロードします。</p>
 
-<p>今回は12月1日のデータを使用しました。ダウンロードしたファイルは以下のとおりです。</p>
+<p>今回は2019年11月の1ヶ月間に観測された平均値を使用しました。ダウンロードしたファイルは以下のとおりです。</p>
 
 <ul>
-<li>GC1SG1_20191201D01D_D0000_3MSG_RV03F_1001.h5</li>
-<li>GC1SG1_20191201D01D_D0000_3MSG_RV05F_1001.h5</li>
-<li>GC1SG1_20191201D01D_D0000_3MSG_RV07F_1001.h5</li>
+<li>GC1SG1_20191101D01M_D0000_3MSG_RV03F_1001.h5</li>
+<li>GC1SG1_20191101D01M_D0000_3MSG_RV05F_1001.h5</li>
+<li>GC1SG1_20191101D01M_D0000_3MSG_RV07F_1001.h5</li>
 </ul>
 
 <p>ファイル名の後ろのほうにある、RV03、RV05、RV07はプロダクトIDとよばれる観測から得られた物理量の種類を
@@ -101,9 +100,9 @@ GTiff形式に変換します。</p>
 </span><span class="c1"></span>	<span class="n">uint16_t</span> <span class="n">data</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
 
 	<span class="c1">// File名が長いので、定数化
-</span><span class="c1"></span>	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">RED</span>   <span class="o">=</span> <span class="s">&#34;GC1SG1_20191201D01D_D0000_3MSG_RV07F_1001.h5&#34;</span><span class="p">;</span>
-	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">GREEN</span> <span class="o">=</span> <span class="s">&#34;GC1SG1_20191201D01D_D0000_3MSG_RV03F_1001.h5&#34;</span><span class="p">;</span>
-	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">BLUE</span>  <span class="o">=</span> <span class="s">&#34;GC1SG1_20191201D01D_D0000_3MSG_RV05F_1001.h5&#34;</span><span class="p">;</span>
+</span><span class="c1"></span>	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">RED</span>   <span class="o">=</span> <span class="s">&#34;GC1SG1_20191101D01M_D0000_3MSG_RV03F_1001.h5&#34;</span><span class="p">;</span>
+	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">GREEN</span> <span class="o">=</span> <span class="s">&#34;GC1SG1_20191101D01M_D0000_3MSG_RV05F_1001.h5&#34;</span><span class="p">;</span>
+	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">BLUE</span>  <span class="o">=</span> <span class="s">&#34;GC1SG1_20191101D01M_D0000_3MSG_RV07F_1001.h5&#34;</span><span class="p">;</span>
 
 
 	<span class="c1">// GDALのGTiffドライバを呼び出す
@@ -199,12 +198,14 @@ GTiff形式に変換します。</p>
 
 <p>結果はTL;DRのところに載せたとおりです。
 実行する時は、確実にスタック領域が不足するので、ulimitコマンドでスタック領域を無制限にすることを忘れずに。
-さもないとSegmentation Faultで落ちますので。</p>
+さもないとSegmentation Faultで落ちます。</p>
 <div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">$ <span class="nb">ulimit</span> -s unlimited</code></pre></div>
-<p>低軌道衛星なのでどうしても欠損値がありますが、約2日で全球を観測できる衛星なので、
-2日分のデータを合成すると全球の画像が作れると思います。まぁ後日やることにしましょう。</p>
+<p>今回は、GCOM-Cの可視光のデータを使ってTrue Color Imageを再構成してみました。
+GCOM-Cは可視光以外にも、海水面温度や地表面温度、海の色、エアロゾル、雲頂高度といった興味深い値を観測し、
+その数値データを数日遅れで入手することができます。</p>
 
-<p>明日は、Kanahiroさんの記事です。</p>
+<p>興味がある方は、ぜひ他のデータも可視化してみてください。
+明日は、Kanahiroさんの記事です。</p>
 ]]></content>
 		</item>
 		

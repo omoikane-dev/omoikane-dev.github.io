@@ -13,7 +13,7 @@
 
 <meta itemprop="datePublished" content="2019-12-08T00:00:00&#43;09:00" />
 <meta itemprop="dateModified" content="2019-12-08T00:00:00&#43;09:00" />
-<meta itemprop="wordCount" content="2852">
+<meta itemprop="wordCount" content="2866">
 
 
 
@@ -84,11 +84,10 @@
 <p>今回は2017年の12月に打ち上げられた、気候変動観測衛星「しきさい」(GCOM-C)の可視領域の数値データを、
 GDAL2.4で再構成することで、True Color Imageに再構成してみました。</p>
 
-<p>結果は、こんな感じになりました。(Original data provided by JAXA)
-<img src="./GC1SG1_20191201D01D.png" alt="" /></p>
+<p>結果は、こんな感じになりました。欠損値は透明にしてあります。</p>
 
-<p>欠損値は透明にしてあります。低軌道衛星なのでどうしても欠損値が多いですね。約2日で全球を観測できる衛星なので、
-データを合成すると全球の画像が作れるはずです。</p>
+<p><img src="./GC1SG1_20191101D01M.png" alt="" />
+(Original data provided by JAXA)</p>
 
 <p>あと再構成プログラムをC++で書きましたが、Pythonのほうがよかったかも&hellip;</p>
 
@@ -97,18 +96,18 @@ GDAL2.4で再構成することで、True Color Imageに再構成してみまし
 <p>気候変動観測衛星「しきさい」は、地球環境変動観測ミッション(GCOM)の陸域版の衛星です。
 GCOMは地球から放射される様々な光を長期間観測することで、地球の気候変動の監視と
 メカニズムの解明を目的としたプロジェクトです。水循環を観測するGCOM-Wと、気候変動を観測する
-GCOM-Cという二つの衛星で観測を行っています。</p>
+GCOM-Cという二つの衛星で観測を行っています。
+GCOM-Cに搭載されている、SGLIという多波長光学放射計は、可視、近赤外、近紫外領域の
+19の観測波長帯を持っています。</p>
 
-<p>GCOM-Cに搭載されている、SGLIという多波長光学放射計は、可視、近赤外、近紫外領域の
-19の観測波長帯を持っています。
-今回は、可視領域の観測データをTrue Colorイメージを作成してみます。</p>
+<p>今回は、可視領域の観測データをTrue Colorイメージを作成してみます。</p>
 
 <h2 id="データの入手方法">データの入手方法<a href="#データの入手方法" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 
-<p>まずは、GCOM-Cのデータを入手しましょう。
+<p>まずは、GCOM-Cの観測データを入手しましょう。
 JaxaのG-Portal(<a href="https://gportal.jaxa.jp/gpr/">https://gportal.jaxa.jp/gpr/</a>) というページでユーザー登録をすると、FTPで
 データをダウンロードすることができます。また、G-PortalのWebサイトにログインすると
-データの検索や、フォーマット変換ができるようです。
+データの検索やダウンロード、フォーマット変換ができるようです。
 私はデータ変換を自動化する必要がある別の目的があるので、あえて自分でやることにします。
 詳しくは
 「<a href="https://gportal.jaxa.jp/gpr/assets/mng_upload/COMMON/upload/GPortalUserManual_ja.pdf">G-Portal 地球観測衛星データ提供システムユーザ向け取扱説明書</a>」と
@@ -117,12 +116,12 @@ JaxaのG-Portal(<a href="https://gportal.jaxa.jp/gpr/">https://gportal.jaxa.jp/g
 <p>それでは、FTPサーバにログインして、/standard/GCOM-C/GCOM-C.SGLI 以下にある、L3.LAND.RV03、L3.LAND.RV05、L3.LAND.RV07 から同じ日付のデータを
 ダウンロードします。</p>
 
-<p>今回は12月1日のデータを使用しました。ダウンロードしたファイルは以下のとおりです。</p>
+<p>今回は2019年11月の1ヶ月間に観測された平均値を使用しました。ダウンロードしたファイルは以下のとおりです。</p>
 
 <ul>
-<li>GC1SG1_20191201D01D_D0000_3MSG_RV03F_1001.h5</li>
-<li>GC1SG1_20191201D01D_D0000_3MSG_RV05F_1001.h5</li>
-<li>GC1SG1_20191201D01D_D0000_3MSG_RV07F_1001.h5</li>
+<li>GC1SG1_20191101D01M_D0000_3MSG_RV03F_1001.h5</li>
+<li>GC1SG1_20191101D01M_D0000_3MSG_RV05F_1001.h5</li>
+<li>GC1SG1_20191101D01M_D0000_3MSG_RV07F_1001.h5</li>
 </ul>
 
 <p>ファイル名の後ろのほうにある、RV03、RV05、RV07はプロダクトIDとよばれる観測から得られた物理量の種類を
@@ -158,9 +157,9 @@ GTiff形式に変換します。</p>
 </span><span class="c1"></span>	<span class="n">uint16_t</span> <span class="n">data</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
 
 	<span class="c1">// File名が長いので、定数化
-</span><span class="c1"></span>	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">RED</span>   <span class="o">=</span> <span class="s">&#34;GC1SG1_20191201D01D_D0000_3MSG_RV07F_1001.h5&#34;</span><span class="p">;</span>
-	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">GREEN</span> <span class="o">=</span> <span class="s">&#34;GC1SG1_20191201D01D_D0000_3MSG_RV03F_1001.h5&#34;</span><span class="p">;</span>
-	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">BLUE</span>  <span class="o">=</span> <span class="s">&#34;GC1SG1_20191201D01D_D0000_3MSG_RV05F_1001.h5&#34;</span><span class="p">;</span>
+</span><span class="c1"></span>	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">RED</span>   <span class="o">=</span> <span class="s">&#34;GC1SG1_20191101D01M_D0000_3MSG_RV03F_1001.h5&#34;</span><span class="p">;</span>
+	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">GREEN</span> <span class="o">=</span> <span class="s">&#34;GC1SG1_20191101D01M_D0000_3MSG_RV05F_1001.h5&#34;</span><span class="p">;</span>
+	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">BLUE</span>  <span class="o">=</span> <span class="s">&#34;GC1SG1_20191101D01M_D0000_3MSG_RV07F_1001.h5&#34;</span><span class="p">;</span>
 
 
 	<span class="c1">// GDALのGTiffドライバを呼び出す
@@ -256,12 +255,14 @@ GTiff形式に変換します。</p>
 
 <p>結果はTL;DRのところに載せたとおりです。
 実行する時は、確実にスタック領域が不足するので、ulimitコマンドでスタック領域を無制限にすることを忘れずに。
-さもないとSegmentation Faultで落ちますので。</p>
+さもないとSegmentation Faultで落ちます。</p>
 <div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">$ <span class="nb">ulimit</span> -s unlimited</code></pre></div>
-<p>低軌道衛星なのでどうしても欠損値がありますが、約2日で全球を観測できる衛星なので、
-2日分のデータを合成すると全球の画像が作れると思います。まぁ後日やることにしましょう。</p>
+<p>今回は、GCOM-Cの可視光のデータを使ってTrue Color Imageを再構成してみました。
+GCOM-Cは可視光以外にも、海水面温度や地表面温度、海の色、エアロゾル、雲頂高度といった興味深い値を観測し、
+その数値データを数日遅れで入手することができます。</p>
 
-<p>明日は、Kanahiroさんの記事です。</p>
+<p>興味がある方は、ぜひ他のデータも可視化してみてください。
+明日は、Kanahiroさんの記事です。</p>
 
 			</div>
 			<hr class="post-end">
@@ -269,7 +270,7 @@ GTiff形式に変換します。</p>
 				<p>
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://www.omoikane.dev/tags/gdal">gdal</a></span><span class="tag"><a href="https://www.omoikane.dev/tags/gis">GIS</a></span><span class="tag"><a href="https://www.omoikane.dev/tags/gcom-c">GCOM-C</a></span>
 				</p>
-				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>2852 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>2866 Words</p>
 				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2019-12-08 00:00 &#43;0900</p>
 			</footer>
 		</article>
