@@ -7,7 +7,7 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Sun, 08 Dec 2019 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Sat, 07 Dec 2019 00:00:00 +0900</lastBuildDate>
     
 	<atom:link href="https://www.omoikane.dev/tags/gdal/index.xml" rel="self" type="application/rss+xml" />
     
@@ -15,10 +15,10 @@
     <item>
       <title>GDALでGCOM-Cの可視領域のデータからTrue Colorイメージを再構成してみた</title>
       <link>https://www.omoikane.dev/posts/gcomc-gdal/</link>
-      <pubDate>Sun, 08 Dec 2019 00:00:00 +0900</pubDate>
+      <pubDate>Sat, 07 Dec 2019 00:00:00 +0900</pubDate>
       
       <guid>https://www.omoikane.dev/posts/gcomc-gdal/</guid>
-      <description>この記事は、FOSS4G Advent Calendar 2019 の12月8日の記事です。 昨日の記事は、 northprintさんの「mapboxのMaps SDK for Androidでお</description>
+      <description>この記事は、FOSS4G Advent Calendar 2019 の12月7日の記事です。 昨日の記事は、 northprintさんの「mapboxのMaps SDK for Androidでお</description>
     </item>
     
   </channel>

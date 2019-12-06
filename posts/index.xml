@@ -6,19 +6,19 @@
 		<generator>Hugo -- gohugo.io</generator>
 		<language>en-us</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Sun, 08 Dec 2019 00:00:00 +0900</lastBuildDate>
+		<lastBuildDate>Sat, 07 Dec 2019 00:00:00 +0900</lastBuildDate>
 		<atom:link href="https://www.omoikane.dev/posts/index.xml" rel="self" type="application/rss+xml" />
 		
 		<item>
 			<title>GDALでGCOM-Cの可視領域のデータからTrue Colorイメージを再構成してみた</title>
 			<link>https://www.omoikane.dev/posts/gcomc-gdal/</link>
-			<pubDate>Sun, 08 Dec 2019 00:00:00 +0900</pubDate>
+			<pubDate>Sat, 07 Dec 2019 00:00:00 +0900</pubDate>
 			
 			<guid>https://www.omoikane.dev/posts/gcomc-gdal/</guid>
-			<description>この記事は、FOSS4G Advent Calendar 2019 の12月8日の記事です。 昨日の記事は、 northprintさんの「mapboxのMaps SDK for Androidでお</description>
+			<description>この記事は、FOSS4G Advent Calendar 2019 の12月7日の記事です。 昨日の記事は、 northprintさんの「mapboxのMaps SDK for Androidでお</description>
 			<content type="html"><![CDATA[
 
-<p>この記事は、<a href="https://qiita.com/advent-calendar/2019/foss4g">FOSS4G Advent Calendar 2019</a> の12月8日の記事です。
+<p>この記事は、<a href="https://qiita.com/advent-calendar/2019/foss4g">FOSS4G Advent Calendar 2019</a> の12月7日の記事です。
 昨日の記事は、 northprintさんの「<a href="https://northprint.net/?p=255">mapboxのMaps SDK for Androidでお好みのラスタータイルを表示する</a>」
 でした。</p>
 
