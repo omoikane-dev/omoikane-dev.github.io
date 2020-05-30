@@ -9,16 +9,13 @@
 	<meta name="msapplication-TileColor" content="#494f5c">
 <meta itemprop="name" content="OpenBSD6.5を暗号化パーティションにインストールする方法">
 <meta itemprop="description" content="TLDR; OpenBSDを、暗号化パーティションにインストールすることが可能である。 インストーラー実行時に、shellに落ちて暗号化パーティションを">
-
-
 <meta itemprop="datePublished" content="2019-06-08T21:24:29&#43;09:00" />
 <meta itemprop="dateModified" content="2019-06-08T21:24:29&#43;09:00" />
 <meta itemprop="wordCount" content="562">
 
 
 
-<meta itemprop="keywords" content="OpenBSD," />
-<meta property="og:title" content="OpenBSD6.5を暗号化パーティションにインストールする方法" />
+<meta itemprop="keywords" content="OpenBSD," /><meta property="og:title" content="OpenBSD6.5を暗号化パーティションにインストールする方法" />
 <meta property="og:description" content="TLDR; OpenBSDを、暗号化パーティションにインストールすることが可能である。 インストーラー実行時に、shellに落ちて暗号化パーティションを" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.omoikane.dev/posts/install-openbsd-in-encrypted-partition/" />
@@ -73,45 +70,30 @@
 				<h1>OpenBSD6.5を暗号化パーティションにインストールする方法</h1>
 			</header>
 			<div class="content">
-				
-
-<h2 id="tldr">TLDR;<a href="#tldr" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-
+				<h2 id="tldr">TLDR;<a href="#tldr" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <ul>
-<li><p>OpenBSDを、暗号化パーティションにインストールすることが可能である。</p></li>
-
-<li><p>インストーラー実行時に、shellに落ちて暗号化パーティションを作成し、そこにインストールすれば良い。</p></li>
+<li>
+<p>OpenBSDを、暗号化パーティションにインストールすることが可能である。</p>
+</li>
+<li>
+<p>インストーラー実行時に、shellに落ちて暗号化パーティションを作成し、そこにインストールすれば良い。</p>
+</li>
 </ul>
-
-<hr />
-
+<hr>
 <p>PCの盗難や紛失に備え、システムがインストールされているファイルシステムを暗号化することがある。
 また、個人情報等が入ったストレージデバイスを廃棄時の事や、クラウド上のインスタンスにアタッチされているディスクは
 ただのファイルであることを考えると、暗号化しておいたほうが安心だったりする。</p>
-
 <p>OpenBSDもLinux同様、暗号化パーティションへのインストールをサポートしている。</p>
-
 <p>以下に、OpenBSDを暗号化パーティションにインストールする方法を示す。</p>
-
 <h2 id="1-暗号化パーティションの作成">1. 暗号化パーティションの作成<a href="#1-暗号化パーティションの作成" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-
 <p>OpenBSDのインストーラを起動すると、まず</p>
-
 <pre><code>Welcome to the OpenBSD/amd64 6。5 installation program.
 (I)nstall, (U)pgrade, (A)utoinstall or (S)hell?
-</code></pre>
-
-<p>と聞かれる。ここで<code>S</code>を選択し、Shellに落ちて暗号化パーティションを作成する。</p>
-
-<h3 id="1-0-ディスク全体を乱数で埋める">1.0 ディスク全体を乱数で埋める<a href="#1-0-ディスク全体を乱数で埋める" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
-
+</code></pre><p>と聞かれる。ここで<code>S</code>を選択し、Shellに落ちて暗号化パーティションを作成する。</p>
+<h3 id="10-ディスク全体を乱数で埋める">1.0 ディスク全体を乱数で埋める<a href="#10-ディスク全体を乱数で埋める" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 <p>ディスク全体を一度乱数で埋めておくと、攻撃者にディスクイメージを取得されたとしても、解析が非常に困難になる。機微な情報を保存する必要がある場合は、ディスク全体を乱数で埋めておいたほうが良い。</p>
-
 <pre><code>dd if=/dev/urandom of=/dev/sd0 bs=1m
-</code></pre>
-
-<p>この処理には、非常に時間がかかる。乱数で埋める必要が無ければスキップしても問題ない。。</p>
-
+</code></pre><p>この処理には、非常に時間がかかる。乱数で埋める必要が無ければスキップしても問題ない。。</p>
 <h3 id="uefi-or-mbr">UEFI or MBR<a href="#uefi-or-mbr" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
 
 			</div>
@@ -127,17 +109,15 @@
 		<aside id="toc">
 			<div class="toc-title">Table of Contents</div>
 			<nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#tldr">TLDR;</a></li>
-<li><a href="#1-暗号化パーティションの作成">1. 暗号化パーティションの作成</a>
-<ul>
-<li><a href="#1-0-ディスク全体を乱数で埋める">1.0 ディスク全体を乱数で埋める</a></li>
-<li><a href="#uefi-or-mbr">UEFI or MBR</a></li>
-</ul></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#tldr">TLDR;</a></li>
+    <li><a href="#1-暗号化パーティションの作成">1. 暗号化パーティションの作成</a>
+      <ul>
+        <li><a href="#10-ディスク全体を乱数で埋める">1.0 ディスク全体を乱数で埋める</a></li>
+        <li><a href="#uefi-or-mbr">UEFI or MBR</a></li>
+      </ul>
+    </li>
+  </ul>
 </nav>
 		</aside>
 		<div class="post-nav thin">
@@ -153,7 +133,7 @@
 	</main>
 
 	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
-		<p>&copy; 2019 <a href="https://www.omoikane.dev">omoikane</a> &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></p>
+		<p>&copy; 2020 <a href="https://www.omoikane.dev">omoikane</a> &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></p>
 		<p>
 			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://www.omoikane.dev/posts/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
 		</p>

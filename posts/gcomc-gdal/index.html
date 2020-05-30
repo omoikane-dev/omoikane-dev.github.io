@@ -9,16 +9,13 @@
 	<meta name="msapplication-TileColor" content="#494f5c">
 <meta itemprop="name" content="GDALでGCOM-Cの可視領域のデータからTrue Colorイメージを再構成してみた">
 <meta itemprop="description" content="この記事は、FOSS4G Advent Calendar 2019 の12月7日の記事です。 昨日の記事は、 northprintさんの「mapboxのMaps SDK for Androidでお">
-
-
 <meta itemprop="datePublished" content="2019-12-07T00:00:00&#43;09:00" />
 <meta itemprop="dateModified" content="2019-12-07T00:00:00&#43;09:00" />
 <meta itemprop="wordCount" content="2876">
 
 
 
-<meta itemprop="keywords" content="gdal,GIS,GCOM-C," />
-<meta property="og:title" content="GDALでGCOM-Cの可視領域のデータからTrue Colorイメージを再構成してみた" />
+<meta itemprop="keywords" content="gdal,GIS,GCOM-C," /><meta property="og:title" content="GDALでGCOM-Cの可視領域のデータからTrue Colorイメージを再構成してみた" />
 <meta property="og:description" content="この記事は、FOSS4G Advent Calendar 2019 の12月7日の記事です。 昨日の記事は、 northprintさんの「mapboxのMaps SDK for Androidでお" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.omoikane.dev/posts/gcomc-gdal/" />
@@ -73,37 +70,25 @@
 				<h1>GDALでGCOM-Cの可視領域のデータからTrue Colorイメージを再構成してみた</h1>
 			</header>
 			<div class="content">
-				
-
-<p>この記事は、<a href="https://qiita.com/advent-calendar/2019/foss4g">FOSS4G Advent Calendar 2019</a> の12月7日の記事です。
+				<p>この記事は、<a href="https://qiita.com/advent-calendar/2019/foss4g">FOSS4G Advent Calendar 2019</a> の12月7日の記事です。
 昨日の記事は、 northprintさんの「<a href="https://northprint.net/?p=255">mapboxのMaps SDK for Androidでお好みのラスタータイルを表示する</a>」
 でした。</p>
-
-<h2 id="tl-dr">TL;DR<a href="#tl-dr" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-
+<h2 id="tldr">TL;DR<a href="#tldr" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>今回は2017年の12月に打ち上げられた、気候変動観測衛星「しきさい」(GCOM-C)の可視領域の数値データを、
 GDAL2.4で再構成することで、True Color Imageに再構成してみました。</p>
-
 <p>結果は、こんな感じになりました。欠損値は透明にしてあります。</p>
-
-<p><img src="./GC1SG1_20191101D01M.png" alt="" />
+<p><img src="./GC1SG1_20191101D01M.png" alt="">
 (Original data provided by JAXA)</p>
-
 <p>あと再構成プログラムをC++で書きましたが、Pythonのほうがよかったかも&hellip;</p>
-
-<h2 id="しきさい-の概要">「しきさい」の概要<a href="#しきさい-の概要" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-
+<h2 id="しきさいの概要">「しきさい」の概要<a href="#しきさいの概要" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>気候変動観測衛星「しきさい」は、地球環境変動観測ミッション(GCOM)の陸域版の衛星です。
 GCOMは地球から放射される様々な光を長期間観測することで、地球の気候変動の監視と
 メカニズムの解明を目的としたプロジェクトです。水循環を観測するGCOM-Wと、気候変動を観測する
 GCOM-Cという二つの衛星で観測を行っています。
 GCOM-Cに搭載されている、SGLIという多波長光学放射計は、可視、近赤外、近紫外領域の
 19の観測波長帯を持っています。</p>
-
 <p>今回は可視領域の観測データを使って目視に近い画像である、True Colorイメージを作成してみます。</p>
-
 <h2 id="データの入手方法">データの入手方法<a href="#データの入手方法" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-
 <p>まずは、GCOM-Cの観測データを入手しましょう。
 JaxaのG-Portal(<a href="https://gportal.jaxa.jp/gpr/">https://gportal.jaxa.jp/gpr/</a>) というページでユーザー登録をすると、FTPで
 データをダウンロードすることができます。また、G-PortalのWebサイトにログインすると
@@ -112,40 +97,30 @@ JaxaのG-Portal(<a href="https://gportal.jaxa.jp/gpr/">https://gportal.jaxa.jp/g
 詳しくは
 「<a href="https://gportal.jaxa.jp/gpr/assets/mng_upload/COMMON/upload/GPortalUserManual_ja.pdf">G-Portal 地球観測衛星データ提供システムユーザ向け取扱説明書</a>」と
 「<a href="https://gportal.jaxa.jp/gpr/assets/mng_upload/GCOM-C/GCOM-C_SHIKISAI_Data_Users_Handbook_jp.pdf">気候変動観測衛星「しきさい」(GCOM-C) データ利用ハンドブック</a>」を参照してください。</p>
-
 <p>それでは、FTPサーバにログインして、/standard/GCOM-C/GCOM-C.SGLI 以下にある、L3.LAND.RV03、L3.LAND.RV05、L3.LAND.RV07 から同じ日付のデータを
 ダウンロードします。</p>
-
 <p>今回は2019年11月の1ヶ月間に観測された平均値を使用しました。ダウンロードしたファイルは以下のとおりです。</p>
-
 <ul>
 <li>GC1SG1_20191101D01M_D0000_3MSG_RV03F_1001.h5</li>
 <li>GC1SG1_20191101D01M_D0000_3MSG_RV05F_1001.h5</li>
 <li>GC1SG1_20191101D01M_D0000_3MSG_RV07F_1001.h5</li>
 </ul>
-
 <p>ファイル名の後ろのほうにある、RV03、RV05、RV07はプロダクトIDとよばれる観測から得られた物理量の種類を
 示すIDです。RVxxのIDを持つプロダクトは陸域の大気補正済みの反射率で、RV03が青、RV06が緑、RV07が赤の光に
 相当します。</p>
-
 <p>各データに関しては
 「<a href="https://gportal.jaxa.jp/gpr/assets/mng_upload/GCOM-C/SGLI_Higher_Level_Product_Format_Description_jp.pdf">SGLI高次プロダクト フォーマット説明書</a>」
 を参照してください。</p>
-
 <h2 id="データの再構成">データの再構成<a href="#データの再構成" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-
 <p>では、ダウンロードしたデータを再構成していきます。ダウンロードしたファイルはHDF5という形式で保存されています。
 HDF5はデータやパラメータを階層的に保存できる形式で、観測値だけでなく観測した時間や、処理したアルゴリズム、パラメータ等も
 いっしょに一つのファイルに格納できるすぐれものです。このHDF5形式のファイルからデータを取り出して、GDALを使って
 GTiff形式に変換します。</p>
-
 <p>可視画像は、R、G、Bの3つピクセルから構成されています。GTiffでは、それぞれ別のバンドに格納すれば良いので、
 取り出したデータを各バンドにコピーするだけでOKです。簡単ですね。</p>
-
 <p>以下のプログラムは、HDF5とGDALのライブラリを使用しています。DebianやUbuntuを使用している方は、</p>
-<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">$ sudo apt install libgdal-dev libhdf5-dev</code></pre></div>
-<p>で必要なライブラリをインストールすることができます。</p>
-
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">$ sudo apt install libgdal-dev libhdf5-dev
+</code></pre></div><p>で必要なライブラリをインストールすることができます。</p>
 <p>C++なので、あまりちょっととっつきにくいかもしれませんが、流れはコメントに書いたとおりです。
 同じ流れでPythonで書くことができるはずです。</p>
 <div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
@@ -154,7 +129,7 @@ GTiff形式に変換します。</p>
 </span><span class="c1"></span>	<span class="n">GDALAllRegister</span><span class="p">();</span>
 	
 	<span class="c1">// Dataを格納する配列
-</span><span class="c1"></span>	<span class="n">uint16_t</span> <span class="n">data</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+</span><span class="c1"></span>	<span class="kt">uint16_t</span> <span class="n">data</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
 
 	<span class="c1">// File名が長いので、定数化
 </span><span class="c1"></span>	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">RED</span>   <span class="o">=</span> <span class="s">&#34;GC1SG1_20191101D01M_D0000_3MSG_RV03F_1001.h5&#34;</span><span class="p">;</span>
@@ -196,8 +171,7 @@ GTiff形式に変換します。</p>
 	<span class="c1">// 最後にデータセットをクローズしてできあがり
 </span><span class="c1"></span>	<span class="n">GDALClose</span><span class="p">(</span><span class="n">poDstDS</span><span class="p">);</span>
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-</code></pre></div>
-<p>HDFからデータを取り出すreadDataは、
+</code></pre></div><p>HDFからデータを取り出すreadDataは、
 ただデータを取り出して、引数に指定されたアドレスにコピーしているだけです。が、
 使用しているHDFライブラリでは、DataSpaceにデータを格納するのがお作法のようです。
 コピーするためには、コピー元とコピー先の範囲を指定必要があります。
@@ -217,17 +191,16 @@ GTiff形式に変換します。</p>
     <span class="n">memspace</span><span class="p">.</span><span class="n">selectAll</span><span class="p">();</span>
     <span class="n">ds</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">PredType</span><span class="o">::</span><span class="n">NATIVE_UINT16</span><span class="p">,</span> <span class="n">memspace</span><span class="p">,</span> <span class="n">sp</span><span class="p">);</span>
 <span class="p">}</span>
-</code></pre></div>
-<p>取り出したデータをbandにコピーするcopy2bandは、以下のとおりです。
+</code></pre></div><p>取り出したデータをbandにコピーするcopy2bandは、以下のとおりです。
 データをスキャンして、欠損値を意味する65535を0にして、
 14ビットのデータを6bit右シフトして8bitに丸めてたあと、bandにコピーしています。</p>
 <div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">void</span> <span class="nf">copy2band</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">GDALRasterBand</span> <span class="o">*</span><span class="n">band</span><span class="p">)</span>
 <span class="p">{</span>
 	<span class="c1">// dataを2次元配列としてアクセスしたいので、memcpyで配列にコピー
-</span><span class="c1"></span>	<span class="n">uint16_t</span> <span class="n">val</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
-	<span class="n">memcpy</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uint16_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span> <span class="o">*</span> <span class="n">height</span><span class="p">);</span>
+</span><span class="c1"></span>	<span class="kt">uint16_t</span> <span class="n">val</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+	<span class="n">memcpy</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span> <span class="o">*</span> <span class="n">height</span><span class="p">);</span>
     
-	<span class="n">uint8_t</span> <span class="n">pixel</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+	<span class="kt">uint8_t</span> <span class="n">pixel</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
 
 	<span class="c1">// すべてのデータをスキャンしてデータサイズを8ビットに変換
 </span><span class="c1"></span>	<span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="n">HEIGHT</span><span class="p">;</span> <span class="n">y</span><span class="o">++</span><span class="p">)</span>
@@ -236,33 +209,28 @@ GTiff形式に変換します。</p>
 	<span class="c1">// バンドにコピー
 </span><span class="c1"></span>	<span class="n">band</span><span class="o">-&gt;</span><span class="n">RasterIO</span><span class="p">(</span><span class="n">GF_Write</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">pixel</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">GDT_Byte</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
 <span class="p">}</span>
-</code></pre></div>
-<p>最後にアルファチャンネルを生成しているgenAlphaBand関数はこんな感じにしました。</p>
+</code></pre></div><p>最後にアルファチャンネルを生成しているgenAlphaBand関数はこんな感じにしました。</p>
 <div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">void</span> <span class="nf">genAlphaBand</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">GDALRasterBand</span> <span class="o">*</span><span class="n">band</span><span class="p">)</span>
 <span class="p">{</span>
-        <span class="n">uint16_t</span> <span class="n">val</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
-        <span class="n">memcpy</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uint16_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">WIDTH</span> <span class="o">*</span> <span class="n">HEIGHT</span><span class="p">);</span>
-        <span class="n">uint8_t</span> <span class="n">tmp</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+        <span class="kt">uint16_t</span> <span class="n">val</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+        <span class="n">memcpy</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">WIDTH</span> <span class="o">*</span> <span class="n">HEIGHT</span><span class="p">);</span>
+        <span class="kt">uint8_t</span> <span class="n">tmp</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
         <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="n">HEIGHT</span><span class="p">;</span> <span class="n">y</span><span class="o">++</span><span class="p">)</span>
                 <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">WIDTH</span><span class="p">;</span> <span class="n">x</span><span class="o">++</span><span class="p">){</span>
                         <span class="n">tmp</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">==</span> <span class="mi">65535</span><span class="p">)</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="mi">255</span><span class="p">;</span>
                 <span class="p">}</span>
         <span class="n">band</span><span class="o">-&gt;</span><span class="n">RasterIO</span><span class="p">(</span><span class="n">GF_Write</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">tmp</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">GDT_Byte</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
 <span class="p">}</span>
-</code></pre></div>
-<p>ほぼcopy2bandと同じです。違うのは欠損値だった場合は値を0、そうでないときは255を使用しているだけです。
+</code></pre></div><p>ほぼcopy2bandと同じです。違うのは欠損値だった場合は値を0、そうでないときは255を使用しているだけです。
 ここもそうですが、全体的にリファクタリングの余地がありますね。</p>
-
 <p>結果はTL;DRのところに載せたとおりです。
 実行する時は、確実にスタック領域が不足するので、ulimitコマンドでスタック領域を無制限にすることを忘れずに。
 さもないとSegmentation Faultで落ちます。</p>
-<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">$ <span class="nb">ulimit</span> -s unlimited</code></pre></div>
-<p>今回は、GCOM-Cの可視光のデータを使ってTrue Color Imageを再構成してみました。
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">$ <span class="nb">ulimit</span> -s unlimited
+</code></pre></div><p>今回は、GCOM-Cの可視光のデータを使ってTrue Color Imageを再構成してみました。
 GCOM-Cは可視光以外にも、海水面温度や地表面温度、海の色、エアロゾル、雲頂高度といった興味深い値を観測し、
 その数値データを数日遅れで入手することができます。</p>
-
 <p>興味がある方は、ぜひ他のデータも可視化してみてください。</p>
-
 <p>明日は、Kanahiroさんです。</p>
 
 			</div>
@@ -276,6 +244,9 @@ GCOM-Cは可視光以外にも、海水面温度や地表面温度、海の色�
 			</footer>
 		</article>
 		<div class="post-nav thin">
+			<a class="next-post" href="https://www.omoikane.dev/posts/capturing-microscope/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>中国製の顕微鏡をLinux PCに取り込む方法</span>
+			</a>
 			<a class="prev-post" href="https://www.omoikane.dev/posts/install-openbsd65/">
 				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>OpenBSD6.5をuEFI対応PCにインストールする方法</span>
 			</a>
@@ -285,7 +256,7 @@ GCOM-Cは可視光以外にも、海水面温度や地表面温度、海の色�
 	</main>
 
 	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
-		<p>&copy; 2019 <a href="https://www.omoikane.dev">omoikane</a> &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></p>
+		<p>&copy; 2020 <a href="https://www.omoikane.dev">omoikane</a> &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></p>
 		<p>
 			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://www.omoikane.dev/posts/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
 		</p>

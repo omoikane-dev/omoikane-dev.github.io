@@ -9,16 +9,13 @@
 	<meta name="msapplication-TileColor" content="#494f5c">
 <meta itemprop="name" content="OpenBSD6.4をインストールしたVPSでIPv6を使う際の注意">
 <meta itemprop="description" content="TL;DR OpenBSD 6.4をインストールしたVPSでIPv6のデフォルトゲートウェイに接続できない時は、 SIIを無効にすること。例えば、さくらインターネット">
-
-
 <meta itemprop="datePublished" content="2019-04-17T23:03:29&#43;09:00" />
 <meta itemprop="dateModified" content="2019-04-17T23:03:29&#43;09:00" />
 <meta itemprop="wordCount" content="749">
 
 
 
-<meta itemprop="keywords" content="OpenBSD,VPS,IPv6," />
-<meta property="og:title" content="OpenBSD6.4をインストールしたVPSでIPv6を使う際の注意" />
+<meta itemprop="keywords" content="OpenBSD,VPS,IPv6," /><meta property="og:title" content="OpenBSD6.4をインストールしたVPSでIPv6を使う際の注意" />
 <meta property="og:description" content="TL;DR OpenBSD 6.4をインストールしたVPSでIPv6のデフォルトゲートウェイに接続できない時は、 SIIを無効にすること。例えば、さくらインターネット" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://www.omoikane.dev/posts/openbsd-ipv6-sakura/" />
@@ -73,40 +70,28 @@
 				<h1>OpenBSD6.4をインストールしたVPSでIPv6を使う際の注意</h1>
 			</header>
 			<div class="content">
-				
-
-<h2 id="tl-dr">TL;DR<a href="#tl-dr" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-
+				<h2 id="tldr">TL;DR<a href="#tldr" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 <p>OpenBSD 6.4をインストールしたVPSでIPv6のデフォルトゲートウェイに接続できない時は、
 SIIを無効にすること。例えば、さくらインターネットの場合、hostname.vio0は以下のようになる。</p>
-
 <pre><code>inet  203.0.113.23 255.255.254.0
 inet6 autoconf -autoconfprivacy -soii
 inet6 alias 2001:db8:102:3013:203:0:113:23 64
 up
 !route -nq add -inet6 default fe80::1%vio0
-</code></pre>
-
-<hr />
-
+</code></pre><hr>
 <p>OpenBSDをインストールしたさくらVPSのインスタンスでIPv6の
 デフォルトゲートウェイと通信できなくてハマった。
 なんとか解決できたのでメモ。</p>
-
 <p>さくらVPSは、グローバルIPv6のIPを一つくれる。
 そのゲートウェイはfe80::1である。</p>
-
 <p>OpenBSD 6.3あたりから、Semantically Opaque Interface Identifiers (SOIIs) がデフォルトで有効になっている。
 SOIIとはSLAACアドレス（自動で設定されるリンクローカルアドレス）のインターフェース識別子(IID)にMACアドレスを使わずに、
 プレフィックスも使ってIIDを生成することで、リングローカルアドレスを生成するというもの（RFC7217）。</p>
-
 <p>以前は、MACアドレスだけからリンクローカルアドレスを生成していた（Modified EUI-64）ため、プレフィックスが変化しても
 リンクローカルアドレスから容易にMACアドレスが特定でき、プライバシーやセキュリティの問題があった。
 OpenBSDはそれをいやがって、SOIIをデフォルトで有効にしたのだろう。</p>
-
 <p>一方、さくらのゲートウェイは、IIDをMACアドレスから生成する昔ながらのModified EUI-64を前提にフィルタリングしている
 と思われる。そのため、SOIIで生成されたアドレスはフィルターされIPv6でインターネットに接続できなかったのだろう。</p>
-
 <p>SIIを無効にするには、上記の例のように、ifconfigのオプションに、-soiiをつける。詳細は、ifconfigのmanページを参照のこと。</p>
 
 			</div>
@@ -122,12 +107,9 @@ OpenBSDはそれをいやがって、SOIIをデフォルトで有効にしたの
 		<aside id="toc">
 			<div class="toc-title">Table of Contents</div>
 			<nav id="TableOfContents">
-<ul>
-<li>
-<ul>
-<li><a href="#tl-dr">TL;DR</a></li>
-</ul></li>
-</ul>
+  <ul>
+    <li><a href="#tldr">TL;DR</a></li>
+  </ul>
 </nav>
 		</aside>
 		<div class="post-nav thin">
@@ -143,7 +125,7 @@ OpenBSDはそれをいやがって、SOIIをデフォルトで有効にしたの
 	</main>
 
 	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
-		<p>&copy; 2019 <a href="https://www.omoikane.dev">omoikane</a> &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></p>
+		<p>&copy; 2020 <a href="https://www.omoikane.dev">omoikane</a> &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></p>
 		<p>
 			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://www.omoikane.dev/posts/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
 		</p>

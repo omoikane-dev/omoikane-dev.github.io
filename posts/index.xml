@@ -6,8 +6,59 @@
 		<generator>Hugo -- gohugo.io</generator>
 		<language>en-us</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Sat, 07 Dec 2019 00:00:00 +0900</lastBuildDate>
+		<lastBuildDate>Sat, 30 May 2020 00:00:00 +0900</lastBuildDate>
 		<atom:link href="https://www.omoikane.dev/posts/index.xml" rel="self" type="application/rss+xml" />
+		
+		<item>
+			<title>中国製の顕微鏡をLinux PCに取り込む方法</title>
+			<link>https://www.omoikane.dev/posts/capturing-microscope/</link>
+			<pubDate>Sat, 30 May 2020 00:00:00 +0900</pubDate>
+			
+			<guid>https://www.omoikane.dev/posts/capturing-microscope/</guid>
+			<description>自分用メモ ずいぶん前にaliexpressで購入した、LCD顕微鏡をLinux PCで取りこめた。 何をいまさら感が漂っているだろうが、自分用に</description>
+			<content type="html"><![CDATA[<p>自分用メモ</p>
+<p>ずいぶん前にaliexpressで購入した、LCD顕微鏡をLinux PCで取りこめた。
+何をいまさら感が漂っているだろうが、自分用にメモしておく。</p>
+<p>現在、使用している顕微鏡はこれ。型番は不明。同僚にaliexpressから買ってもらったもの。</p>
+<p><img src="./microscope.png" alt="aliexpressで買った型番不明のLCD顕微鏡"></p>
+<p>これを、PCのUSBポートに接続して、lsusbコマンドを叩くと、謎のデバイスが見えた。</p>
+<pre><code>Bus 001 Device 012: ID 1908:3256 GEMBIRD 
+</code></pre><p>カメラが見えているか確認。v4l2-ctlコマンドは、v4l-utilsパッケージに入っている。</p>
+<pre><code>$ v4l2-ctl --list-devices
+TIGA   Device: TIGA   Device (usb-0000:00:14.0-2.3):
+        /dev/video0
+        /dev/video1
+        /dev/media0
+</code></pre><p>おぉ。見えている。サポートしているフォーマットを確認する。</p>
+<pre><code> v4l2-ctl --list-formats-ext
+ioctl: VIDIOC_ENUM_FMT
+        Type: Video Capture
+
+        [0]: 'YUYV' (YUYV 4:2:2)
+                Size: Discrete 640x480
+                        Interval: Discrete 0.033s (30.000 fps)
+                        Interval: Discrete 0.200s (5.000 fps)
+                Size: Discrete 320x240
+                        Interval: Discrete 0.067s (15.000 fps)
+                        Interval: Discrete 0.200s (5.000 fps)
+                Size: Discrete 160x120
+                        Interval: Discrete 0.067s (15.000 fps)
+                        Interval: Discrete 0.200s (5.000 fps)
+                Size: Discrete 1280x720
+                        Interval: Discrete 0.033s (30.000 fps)
+                        Interval: Discrete 0.200s (5.000 fps)
+                Size: Discrete 176x144
+                        Interval: Discrete 0.067s (15.000 fps)
+                        Interval: Discrete 0.200s (5.000 fps)
+</code></pre><p>640x480 30fpsをサポートしているようだ。vlcで見えるか確認。</p>
+<p>vlcを起動して、[メディア]→[キャプチャーデバイスを開く]→[詳細設定オプション]
+をクリックする。幅と高さに640、480を、フレームレートに30を入力してOKボタンを押下。
+その後、再生ボタン押下で取り込みが始まる。
+<img src="./captured.png" alt="取り込まれた顕微鏡画像"></p>
+<p>もちろんvlcでスナップショットも取れる。これまでLDCをデジカメで撮ってたけど
+これでいろいろはかどる。</p>
+]]></content>
+		</item>
 		
 		<item>
 			<title>GDALでGCOM-Cの可視領域のデータからTrue Colorイメージを再構成してみた</title>
@@ -16,37 +67,25 @@
 			
 			<guid>https://www.omoikane.dev/posts/gcomc-gdal/</guid>
 			<description>この記事は、FOSS4G Advent Calendar 2019 の12月7日の記事です。 昨日の記事は、 northprintさんの「mapboxのMaps SDK for Androidでお</description>
-			<content type="html"><![CDATA[
-
-<p>この記事は、<a href="https://qiita.com/advent-calendar/2019/foss4g">FOSS4G Advent Calendar 2019</a> の12月7日の記事です。
+			<content type="html"><![CDATA[<p>この記事は、<a href="https://qiita.com/advent-calendar/2019/foss4g">FOSS4G Advent Calendar 2019</a> の12月7日の記事です。
 昨日の記事は、 northprintさんの「<a href="https://northprint.net/?p=255">mapboxのMaps SDK for Androidでお好みのラスタータイルを表示する</a>」
 でした。</p>
-
-<h2 id="tl-dr">TL;DR</h2>
-
+<h2 id="tldr">TL;DR</h2>
 <p>今回は2017年の12月に打ち上げられた、気候変動観測衛星「しきさい」(GCOM-C)の可視領域の数値データを、
 GDAL2.4で再構成することで、True Color Imageに再構成してみました。</p>
-
 <p>結果は、こんな感じになりました。欠損値は透明にしてあります。</p>
-
-<p><img src="./GC1SG1_20191101D01M.png" alt="" />
+<p><img src="./GC1SG1_20191101D01M.png" alt="">
 (Original data provided by JAXA)</p>
-
 <p>あと再構成プログラムをC++で書きましたが、Pythonのほうがよかったかも&hellip;</p>
-
-<h2 id="しきさい-の概要">「しきさい」の概要</h2>
-
+<h2 id="しきさいの概要">「しきさい」の概要</h2>
 <p>気候変動観測衛星「しきさい」は、地球環境変動観測ミッション(GCOM)の陸域版の衛星です。
 GCOMは地球から放射される様々な光を長期間観測することで、地球の気候変動の監視と
 メカニズムの解明を目的としたプロジェクトです。水循環を観測するGCOM-Wと、気候変動を観測する
 GCOM-Cという二つの衛星で観測を行っています。
 GCOM-Cに搭載されている、SGLIという多波長光学放射計は、可視、近赤外、近紫外領域の
 19の観測波長帯を持っています。</p>
-
 <p>今回は可視領域の観測データを使って目視に近い画像である、True Colorイメージを作成してみます。</p>
-
 <h2 id="データの入手方法">データの入手方法</h2>
-
 <p>まずは、GCOM-Cの観測データを入手しましょう。
 JaxaのG-Portal(<a href="https://gportal.jaxa.jp/gpr/">https://gportal.jaxa.jp/gpr/</a>) というページでユーザー登録をすると、FTPで
 データをダウンロードすることができます。また、G-PortalのWebサイトにログインすると
@@ -55,40 +94,30 @@ JaxaのG-Portal(<a href="https://gportal.jaxa.jp/gpr/">https://gportal.jaxa.jp/g
 詳しくは
 「<a href="https://gportal.jaxa.jp/gpr/assets/mng_upload/COMMON/upload/GPortalUserManual_ja.pdf">G-Portal 地球観測衛星データ提供システムユーザ向け取扱説明書</a>」と
 「<a href="https://gportal.jaxa.jp/gpr/assets/mng_upload/GCOM-C/GCOM-C_SHIKISAI_Data_Users_Handbook_jp.pdf">気候変動観測衛星「しきさい」(GCOM-C) データ利用ハンドブック</a>」を参照してください。</p>
-
 <p>それでは、FTPサーバにログインして、/standard/GCOM-C/GCOM-C.SGLI 以下にある、L3.LAND.RV03、L3.LAND.RV05、L3.LAND.RV07 から同じ日付のデータを
 ダウンロードします。</p>
-
 <p>今回は2019年11月の1ヶ月間に観測された平均値を使用しました。ダウンロードしたファイルは以下のとおりです。</p>
-
 <ul>
 <li>GC1SG1_20191101D01M_D0000_3MSG_RV03F_1001.h5</li>
 <li>GC1SG1_20191101D01M_D0000_3MSG_RV05F_1001.h5</li>
 <li>GC1SG1_20191101D01M_D0000_3MSG_RV07F_1001.h5</li>
 </ul>
-
 <p>ファイル名の後ろのほうにある、RV03、RV05、RV07はプロダクトIDとよばれる観測から得られた物理量の種類を
 示すIDです。RVxxのIDを持つプロダクトは陸域の大気補正済みの反射率で、RV03が青、RV06が緑、RV07が赤の光に
 相当します。</p>
-
 <p>各データに関しては
 「<a href="https://gportal.jaxa.jp/gpr/assets/mng_upload/GCOM-C/SGLI_Higher_Level_Product_Format_Description_jp.pdf">SGLI高次プロダクト フォーマット説明書</a>」
 を参照してください。</p>
-
 <h2 id="データの再構成">データの再構成</h2>
-
 <p>では、ダウンロードしたデータを再構成していきます。ダウンロードしたファイルはHDF5という形式で保存されています。
 HDF5はデータやパラメータを階層的に保存できる形式で、観測値だけでなく観測した時間や、処理したアルゴリズム、パラメータ等も
 いっしょに一つのファイルに格納できるすぐれものです。このHDF5形式のファイルからデータを取り出して、GDALを使って
 GTiff形式に変換します。</p>
-
 <p>可視画像は、R、G、Bの3つピクセルから構成されています。GTiffでは、それぞれ別のバンドに格納すれば良いので、
 取り出したデータを各バンドにコピーするだけでOKです。簡単ですね。</p>
-
 <p>以下のプログラムは、HDF5とGDALのライブラリを使用しています。DebianやUbuntuを使用している方は、</p>
-<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">$ sudo apt install libgdal-dev libhdf5-dev</code></pre></div>
-<p>で必要なライブラリをインストールすることができます。</p>
-
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">$ sudo apt install libgdal-dev libhdf5-dev
+</code></pre></div><p>で必要なライブラリをインストールすることができます。</p>
 <p>C++なので、あまりちょっととっつきにくいかもしれませんが、流れはコメントに書いたとおりです。
 同じ流れでPythonで書くことができるはずです。</p>
 <div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
@@ -97,7 +126,7 @@ GTiff形式に変換します。</p>
 </span><span class="c1"></span>	<span class="n">GDALAllRegister</span><span class="p">();</span>
 	
 	<span class="c1">// Dataを格納する配列
-</span><span class="c1"></span>	<span class="n">uint16_t</span> <span class="n">data</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+</span><span class="c1"></span>	<span class="kt">uint16_t</span> <span class="n">data</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
 
 	<span class="c1">// File名が長いので、定数化
 </span><span class="c1"></span>	<span class="k">static</span> <span class="k">const</span> <span class="n">string</span> <span class="n">RED</span>   <span class="o">=</span> <span class="s">&#34;GC1SG1_20191101D01M_D0000_3MSG_RV03F_1001.h5&#34;</span><span class="p">;</span>
@@ -139,8 +168,7 @@ GTiff形式に変換します。</p>
 	<span class="c1">// 最後にデータセットをクローズしてできあがり
 </span><span class="c1"></span>	<span class="n">GDALClose</span><span class="p">(</span><span class="n">poDstDS</span><span class="p">);</span>
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-</code></pre></div>
-<p>HDFからデータを取り出すreadDataは、
+</code></pre></div><p>HDFからデータを取り出すreadDataは、
 ただデータを取り出して、引数に指定されたアドレスにコピーしているだけです。が、
 使用しているHDFライブラリでは、DataSpaceにデータを格納するのがお作法のようです。
 コピーするためには、コピー元とコピー先の範囲を指定必要があります。
@@ -160,17 +188,16 @@ GTiff形式に変換します。</p>
     <span class="n">memspace</span><span class="p">.</span><span class="n">selectAll</span><span class="p">();</span>
     <span class="n">ds</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">PredType</span><span class="o">::</span><span class="n">NATIVE_UINT16</span><span class="p">,</span> <span class="n">memspace</span><span class="p">,</span> <span class="n">sp</span><span class="p">);</span>
 <span class="p">}</span>
-</code></pre></div>
-<p>取り出したデータをbandにコピーするcopy2bandは、以下のとおりです。
+</code></pre></div><p>取り出したデータをbandにコピーするcopy2bandは、以下のとおりです。
 データをスキャンして、欠損値を意味する65535を0にして、
 14ビットのデータを6bit右シフトして8bitに丸めてたあと、bandにコピーしています。</p>
 <div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">void</span> <span class="nf">copy2band</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">GDALRasterBand</span> <span class="o">*</span><span class="n">band</span><span class="p">)</span>
 <span class="p">{</span>
 	<span class="c1">// dataを2次元配列としてアクセスしたいので、memcpyで配列にコピー
-</span><span class="c1"></span>	<span class="n">uint16_t</span> <span class="n">val</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
-	<span class="n">memcpy</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uint16_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span> <span class="o">*</span> <span class="n">height</span><span class="p">);</span>
+</span><span class="c1"></span>	<span class="kt">uint16_t</span> <span class="n">val</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+	<span class="n">memcpy</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span> <span class="o">*</span> <span class="n">height</span><span class="p">);</span>
     
-	<span class="n">uint8_t</span> <span class="n">pixel</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+	<span class="kt">uint8_t</span> <span class="n">pixel</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
 
 	<span class="c1">// すべてのデータをスキャンしてデータサイズを8ビットに変換
 </span><span class="c1"></span>	<span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="n">HEIGHT</span><span class="p">;</span> <span class="n">y</span><span class="o">++</span><span class="p">)</span>
@@ -179,33 +206,28 @@ GTiff形式に変換します。</p>
 	<span class="c1">// バンドにコピー
 </span><span class="c1"></span>	<span class="n">band</span><span class="o">-&gt;</span><span class="n">RasterIO</span><span class="p">(</span><span class="n">GF_Write</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">pixel</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">GDT_Byte</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
 <span class="p">}</span>
-</code></pre></div>
-<p>最後にアルファチャンネルを生成しているgenAlphaBand関数はこんな感じにしました。</p>
+</code></pre></div><p>最後にアルファチャンネルを生成しているgenAlphaBand関数はこんな感じにしました。</p>
 <div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="kt">void</span> <span class="nf">genAlphaBand</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">GDALRasterBand</span> <span class="o">*</span><span class="n">band</span><span class="p">)</span>
 <span class="p">{</span>
-        <span class="n">uint16_t</span> <span class="n">val</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
-        <span class="n">memcpy</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">uint16_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">WIDTH</span> <span class="o">*</span> <span class="n">HEIGHT</span><span class="p">);</span>
-        <span class="n">uint8_t</span> <span class="n">tmp</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+        <span class="kt">uint16_t</span> <span class="n">val</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
+        <span class="n">memcpy</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span> <span class="o">*</span> <span class="n">WIDTH</span> <span class="o">*</span> <span class="n">HEIGHT</span><span class="p">);</span>
+        <span class="kt">uint8_t</span> <span class="n">tmp</span><span class="p">[</span><span class="n">WIDTH</span><span class="p">][</span><span class="n">HEIGHT</span><span class="p">];</span>
         <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="n">HEIGHT</span><span class="p">;</span> <span class="n">y</span><span class="o">++</span><span class="p">)</span>
                 <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">WIDTH</span><span class="p">;</span> <span class="n">x</span><span class="o">++</span><span class="p">){</span>
                         <span class="n">tmp</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="n">y</span><span class="p">]</span> <span class="o">==</span> <span class="mi">65535</span><span class="p">)</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="mi">255</span><span class="p">;</span>
                 <span class="p">}</span>
         <span class="n">band</span><span class="o">-&gt;</span><span class="n">RasterIO</span><span class="p">(</span><span class="n">GF_Write</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">tmp</span><span class="p">,</span> <span class="n">WIDTH</span><span class="p">,</span> <span class="n">HEIGHT</span><span class="p">,</span> <span class="n">GDT_Byte</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
 <span class="p">}</span>
-</code></pre></div>
-<p>ほぼcopy2bandと同じです。違うのは欠損値だった場合は値を0、そうでないときは255を使用しているだけです。
+</code></pre></div><p>ほぼcopy2bandと同じです。違うのは欠損値だった場合は値を0、そうでないときは255を使用しているだけです。
 ここもそうですが、全体的にリファクタリングの余地がありますね。</p>
-
 <p>結果はTL;DRのところに載せたとおりです。
 実行する時は、確実にスタック領域が不足するので、ulimitコマンドでスタック領域を無制限にすることを忘れずに。
 さもないとSegmentation Faultで落ちます。</p>
-<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">$ <span class="nb">ulimit</span> -s unlimited</code></pre></div>
-<p>今回は、GCOM-Cの可視光のデータを使ってTrue Color Imageを再構成してみました。
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">$ <span class="nb">ulimit</span> -s unlimited
+</code></pre></div><p>今回は、GCOM-Cの可視光のデータを使ってTrue Color Imageを再構成してみました。
 GCOM-Cは可視光以外にも、海水面温度や地表面温度、海の色、エアロゾル、雲頂高度といった興味深い値を観測し、
 その数値データを数日遅れで入手することができます。</p>
-
 <p>興味がある方は、ぜひ他のデータも可視化してみてください。</p>
-
 <p>明日は、Kanahiroさんです。</p>
 ]]></content>
 		</item>
@@ -217,119 +239,79 @@ GCOM-Cは可視光以外にも、海水面温度や地表面温度、海の色�
 			
 			<guid>https://www.omoikane.dev/posts/install-openbsd65/</guid>
 			<description>TLDR; OpenBSDのインストール記事が少ないということで、ちょうど6.5がリリースされたのでインストール記事を書いておく。 と思ったら、「Ope</description>
-			<content type="html"><![CDATA[
-
-<h2 id="tldr">TLDR;</h2>
-
+			<content type="html"><![CDATA[<h2 id="tldr">TLDR;</h2>
 <ol>
-<li><p>OpenBSDのインストール記事が少ないということで、ちょうど6.5がリリースされたのでインストール記事を書いておく。
-と思ったら、「<a href="https://qiita.com/ki3nichiro/items/a2ed08d14d2d46e28fca">OpenBSD 6.5 のインストール</a>」という良記事があった。以下の3点以外同じなので、そちらを参照のこと。</p></li>
-
-<li><p>OpenBSDはuEFIからのブートをサポートしている。パーティションの作成時に、</p>
-
-<pre><code>Use (W)hole disk MBR, whole disk (G)PT, or (E)dit? [W]
-</code></pre>
-
-<p>と聞かれたら、<code>G</code>を選べばよい。</p></li>
-
-<li><p>ネットワークインターフェースのファームウェアがインストーラーに含まれていない場合でも、インストールが可能である。
-インストール完了後に、別途ダウンロードしてファームウェアをUSBメモリ等で転送し、<code>fw_update</code>コマンドでインストールすれば良い。</p></li>
-
-<li><p>今となっては、信じられないくらいチョー不親切に見えるCUIベースのインストーラーなので、VierualBox等の仮想マシンにインストールしてみると、練習ができて安心。</p></li>
+<li>
+<p>OpenBSDのインストール記事が少ないということで、ちょうど6.5がリリースされたのでインストール記事を書いておく。
+と思ったら、「<a href="https://qiita.com/ki3nichiro/items/a2ed08d14d2d46e28fca">OpenBSD 6.5 のインストール</a>」という良記事があった。以下の3点以外同じなので、そちらを参照のこと。</p>
+</li>
+<li>
+<p>OpenBSDはuEFIからのブートをサポートしている。パーティションの作成時に、</p>
+<pre><code></code></pre></li>
 </ol>
-
-<hr />
-
+<p>Use (W)hole disk MBR, whole disk (G)PT, or (E)dit? [W]
+```
+と聞かれたら、<code>G</code>を選べばよい。</p>
+<ol>
+<li>
+<p>ネットワークインターフェースのファームウェアがインストーラーに含まれていない場合でも、インストールが可能である。
+インストール完了後に、別途ダウンロードしてファームウェアをUSBメモリ等で転送し、<code>fw_update</code>コマンドでインストールすれば良い。</p>
+</li>
+<li>
+<p>今となっては、信じられないくらいチョー不親切に見えるCUIベースのインストーラーなので、VierualBox等の仮想マシンにインストールしてみると、練習ができて安心。</p>
+</li>
+</ol>
+<hr>
 <h2 id="0-インストールメディアの作成">0. インストールメディアの作成</h2>
-
 <p>まずはインストールに必要なメディアを作成する。
-イメージは、<a href="https://www.openbsd.org/faq/faq4.html#Download">https://www.openbsd.org/faq/faq4.html#Download</a> にリンクがある。
+イメージは、https://www.openbsd.org/faq/faq4.html#Download にリンクがある。
 installXX.fsのamd64のリンクをクリックすればダウンロード可能である。
 また、SHA256ファイルもダウンロードしておく。</p>
 <div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">wget https://cdn.openbsd.org/pub/OpenBSD/6.5/amd64/install65.fs
-wget https://cdn.openbsd.org/pub/OpenBSD/6.5/amd64/SHA256</code></pre></div>
-<p>ダウンロードしたイメージがダウンロードに成功しているか確認する。</p>
+wget https://cdn.openbsd.org/pub/OpenBSD/6.5/amd64/SHA256
+</code></pre></div><p>ダウンロードしたイメージがダウンロードに成功しているか確認する。</p>
 <div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">ha256sum -c SHA256 --ignore-missing 
-install65.fs: 完了</code></pre></div>
-<p>成功！</p>
-
+install65.fs: 完了
+</code></pre></div><p>成功！</p>
 <p>あとは、USBメモリにダウンロードしたイメージを書き込む。</p>
-
 <pre><code>dd if=install65.fs of=/dev/sdb
-</code></pre>
-
-<h2 id="1-インストーラーの実行">1. インストーラーの実行</h2>
-
+</code></pre><h2 id="1-インストーラーの実行">1. インストーラーの実行</h2>
 <p>作成したUSBメモリをPCに差し、USBメモリから起動するとインストーラーが起動する。
 OpenBSDのインストーラーはテキストベースで、GUIのインストーラーなど存在しないので注意。</p>
-
 <p>まず最初に、</p>
-
 <pre><code>Welcome to the OpenBSD/amd64 installation program.
 (I)nstall, (U)pgrade, (A)utoinstall or (S)hell
-</code></pre>
-
-<p>と聞かれるので、<code>I</code>を押してインストールを選択する。</p>
-
-<h3 id="1-1-キーボード選択">1.1 キーボード選択</h3>
-
+</code></pre><p>と聞かれるので、<code>I</code>を押してインストールを選択する。</p>
+<h3 id="11-キーボード選択">1.1 キーボード選択</h3>
 <pre><code>Choose your keyboard layout (? or 'L' for list) [default]
-</code></pre>
-
-<p>キーボードレイアウトを選択する。英語キーボードを使っている人はdefaultで良ので、Enterキーを押下する。
+</code></pre><p>キーボードレイアウトを選択する。英語キーボードを使っている人はdefaultで良ので、Enterキーを押下する。
 日本語キーボードの人は、<code>jp</code>と入力する。</p>
-
-<h3 id="1-2-ホストネーム設定">1.2 ホストネーム設定</h3>
-
+<h3 id="12-ホストネーム設定">1.2 ホストネーム設定</h3>
 <pre><code>System hostname? (short form, e.g. 'foo')
-</code></pre>
-
-<p>ホスト名を入力する。個人で使用する場合は、適当なPC名を入力する。
+</code></pre><p>ホスト名を入力する。個人で使用する場合は、適当なPC名を入力する。
 会社など、誰かが管理しているネットワークで使用する場合は、ネットワーク管理者の指示を仰ぐ。</p>
-
-<h3 id="1-3-ネットワークの設定">1.3 ネットワークの設定</h3>
-
-<h4 id="1-3-1-設定するインターフェースの選択">1.3.1 設定するインターフェースの選択</h4>
-
+<h3 id="13-ネットワークの設定">1.3 ネットワークの設定</h3>
+<h4 id="131-設定するインターフェースの選択">1.3.1 設定するインターフェースの選択</h4>
 <pre><code>Available network interfaces are: iwm0 vlan0.
 Which network interface do you wish to configure? (or 'done')[iwm0]
-</code></pre>
-
-<p>インストーラーが自動検出したネットワークインターフェースを列挙して、
+</code></pre><p>インストーラーが自動検出したネットワークインターフェースを列挙して、
 どのインターフェースを設定するか聞いてくる。</p>
-
 <p>iwm0とvlan0が検出できたようだ。ここはインストールするPCで異なるだろう。
 私がインストールしているPCのネットワークインターフェースは、有線LANがなくWiFiだけしか持っていない。
 iwm0がWiFiのインターフェースだろう。ということで、iwm0を選択する。</p>
-
 <p>有線LANがある人は、有線LANで設定した方が楽だろう。</p>
-
-<h4 id="1-3-2-wifiの設定">1.3.2 WiFiの設定</h4>
-
+<h4 id="132-wifiの設定">1.3.2 WiFiの設定</h4>
 <pre><code>Access point? (ESSID, 'any' list# or '?')[any]
-</code></pre>
-
-<p>WiFiのESSIDを入力する。</p>
-
+</code></pre><p>WiFiのESSIDを入力する。</p>
 <pre><code>Security protocol? (O)pen, (W)ep, WPA-(P)SK [O]
-</code></pre>
-
-<p>WPA-PSKであれば、<code>P</code>を、WEPであれば、<code>W</code>を選択する。</p>
-
+</code></pre><p>WPA-PSKであれば、<code>P</code>を、WEPであれば、<code>W</code>を選択する。</p>
 <pre><code>WPA passphrase? (will echo)
-</code></pre>
-
-<p>WPA-PSKを選択すれば、WPAパスフレーズを、WEPを選択するとWEPキーを聞かれるので、入力する。</p>
-
-<h4 id="1-3-3-ipアドレスの設定">1.3.3 IPアドレスの設定</h4>
-
+</code></pre><p>WPA-PSKを選択すれば、WPAパスフレーズを、WEPを選択するとWEPキーを聞かれるので、入力する。</p>
+<h4 id="133-ipアドレスの設定">1.3.3 IPアドレスの設定</h4>
 <pre><code>IPv4 address for iwm0? (or 'dhcp' or 'none')[dhcp]
-</code></pre>
-
-<p>選択したネットワークインターフェースのIPアドレスを設定する。
+</code></pre><p>選択したネットワークインターフェースのIPアドレスを設定する。
 固定IPを設定するのであれば、<code>192.0.2.123</code>のように入力する。DHCPで自動設定す場合は、<code>dhcp</code>、
 アドレスを付けない場合は、<code>none</code>を入力する。</p>
-
 <pre><code>iwm0: could not read firmware iwm-8265-22 (error 2)
 iwm0: fail to load init firmware
 iwm0: aquiring device failed
@@ -337,104 +319,57 @@ iwm0: aquiring device failed
 iwm0: aquiring device failed
 iwm0: SIOCSIFFLAGS: No such file or directory
 iwm0: no link ........ sleeping
-</code></pre>
-
-<p>げげげっ ファームウェアがないのでネットワークに接続できないと言われてしまった&hellip;orz</p>
-
+</code></pre><p>げげげっ ファームウェアがないのでネットワークに接続できないと言われてしまった&hellip;orz</p>
 <p>しょうがないので、インストールさ行を続けて、インストール後にファームウェアを入れることにしよう。
 追加のファームウェアが必要ない場合は、普通にアドレスが設定されます。</p>
-
 <pre><code>IPv6 address for iwm0? (or 'autoconf' or 'none')[none]
-</code></pre>
-
-<p>IPv6のアドレスを指定する。IPv6を使わないのであれば、<code>none</code>を、自動設定を行うなら<code>autoconf</code>を選択する。
+</code></pre><p>IPv6のアドレスを指定する。IPv6を使わないのであれば、<code>none</code>を、自動設定を行うなら<code>autoconf</code>を選択する。
 固定のIPv6アドレスを使う場合は、<code>2001:db8::1</code>のように指定する。</p>
-
 <pre><code>Available network interfaces are: iwm0 vlan0.
 Whitch network interface do you wish to configure? (or 'done')[iwm0]
-</code></pre>
-
-<p>とまた聞かれるので、必要なら他のインターフェースを選択して、ネットワーク設定を繰り返す。
+</code></pre><p>とまた聞かれるので、必要なら他のインターフェースを選択して、ネットワーク設定を繰り返す。
 ネットワーク設定が終わったら、<code>done</code>を入力し、ドメイン名の設定に進む。</p>
-
-<h4 id="1-3-4-ドメイン名の設定">1.3.4 ドメイン名の設定</h4>
-
+<h4 id="134-ドメイン名の設定">1.3.4 ドメイン名の設定</h4>
 <pre><code>DNS domain name? (e.g. `example.com`)[my.domain]
-</code></pre>
-
-<p>PCのドメイン名を入力する。
+</code></pre><p>PCのドメイン名を入力する。
 ホスト名同様、会社など、誰かが管理しているネットワークで使用する場合は、ネットワーク管理者の指示を仰ぐ。
 個人で自分のドメインを持っていない人は、デフォルトの<code>my.domain</code>でよいでしょう。</p>
-
-<h4 id="1-3-5-dnsサーバの設定">1.3.5 DNSサーバの設定</h4>
-
+<h4 id="135-dnsサーバの設定">1.3.5 DNSサーバの設定</h4>
 <pre><code>DNS servers? (IP address list or 'none')[none]
-</code></pre>
-
-<p>DHCPでIPv4アドレスの設定に成功していれば、取得したアドレスがデフォルト値に設定されているはず。
+</code></pre><p>DHCPでIPv4アドレスの設定に成功していれば、取得したアドレスがデフォルト値に設定されているはず。
 なので、Enterキーを押下するだけで良いと思う。
 私は失敗したので、<code>8.8.8.8</code>を入力した。</p>
-
-<h3 id="1-4-rootパスワードの設定">1.4 rootパスワードの設定</h3>
-
+<h3 id="14-rootパスワードの設定">1.4 rootパスワードの設定</h3>
 <pre><code>Password for root account? (will not echo)
-</code></pre>
-
-<p>管理者アカウントのログインパスワードを設定する。入力した文字は表示されないので注意。</p>
-
-<h3 id="1-5-sshサーバ自動起動の設定">1.5 sshサーバ自動起動の設定</h3>
-
+</code></pre><p>管理者アカウントのログインパスワードを設定する。入力した文字は表示されないので注意。</p>
+<h3 id="15-sshサーバ自動起動の設定">1.5 sshサーバ自動起動の設定</h3>
 <pre><code>Start sshd(8) by default? [yes]
-</code></pre>
-
-<p>sshサーバを自動起動するか聞かれる。サーバ用途の場合は起動しても良いだろう。
+</code></pre><p>sshサーバを自動起動するか聞かれる。サーバ用途の場合は起動しても良いだろう。
 デスクトップといった、リモートログインが必要ない用途であれば起動する必要はない。</p>
-
-<h3 id="1-6-デスクトップマネージャー自動起動の設定">1.6 デスクトップマネージャー自動起動の設定</h3>
-
+<h3 id="16-デスクトップマネージャー自動起動の設定">1.6 デスクトップマネージャー自動起動の設定</h3>
 <pre><code>Do you want the X Window System to be started by xenodm(1)? [no]
-</code></pre>
-
-<p>xenodmというデスクトップマネージャーを使ってX Wondow Systemを自動起動するかと聞かれる。
+</code></pre><p>xenodmというデスクトップマネージャーを使ってX Wondow Systemを自動起動するかと聞かれる。
 <code>yes</code>にすると、起動時にGUIのログイン画面が表示される。サーバ用途では<code>no</code>にする。</p>
-
-<h3 id="1-7-一般ユーザの作成">1.7 一般ユーザの作成</h3>
-
+<h3 id="17-一般ユーザの作成">1.7 一般ユーザの作成</h3>
 <pre><code>Setup a user? (enter a lower-case login name or `no`)
-</code></pre>
-
-<p>ここで一般ユーザーを作成する場合は、小文字でログイン名を、必要なければ<code>no</code>を入力する。</p>
-
-<h3 id="1-8-sshでのrootログインの可否の設定">1.8 sshでのrootログインの可否の設定</h3>
-
+</code></pre><p>ここで一般ユーザーを作成する場合は、小文字でログイン名を、必要なければ<code>no</code>を入力する。</p>
+<h3 id="18-sshでのrootログインの可否の設定">1.8 sshでのrootログインの可否の設定</h3>
 <pre><code>WARNING: root is targeted by password guessing attacks, pubkeys are safer.
 Allow root ssh login? (yes, no, prohibit-password) [no]
-</code></pre>
-
-<p>sshでrootログインを許すかどうか設定する。
+</code></pre><p>sshでrootログインを許すかどうか設定する。
 許可する場合は&rsquo;yes&rsquo;、禁止する場合は&rsquo;no&rsquo;、パスワード認証を禁止し、公開鍵認証であれば許可する場合は、<code>prohibit-password</code>
 を入力する。一般にrootでリモートログインする理由はないので、<code>no</code>で良いだろう。
 なんらかの理由でrootによるリモートログインが必要なら、<code>prohibit-password</code>を設定して、公開鍵認証を使用すべきである。</p>
-
-<h3 id="1-9-パーティションの設定">1.9 パーティションの設定</h3>
-
+<h3 id="19-パーティションの設定">1.9 パーティションの設定</h3>
 <pre><code>Available disks are: sd0 sd1
 Which disk is the root disk? ('?' for details)[sd0]
-</code></pre>
-
-<p>OpenBSDをインストールするディスクを指定する。&rsquo;?&lsquo;を入力するとsd0,sd1が何を指しているかが表示される。
+</code></pre><p>OpenBSDをインストールするディスクを指定する。'?&lsquo;を入力するとsd0,sd1が何を指しているかが表示される。
 私のPCの場合、sd0がハードディスクで、sd1がUSBメモリだった。</p>
-
 <p>インストールするディスクを指定すると、指定したディスクのパーティションテーブルが表示され、その後に</p>
-
 <pre><code>Use (W)hole disk MBR, whole disk (G)PT, or (E)dit? [W]
-</code></pre>
-
-<p>と聞かれる。ディスク全体を使う場合は<code>G</code>を指定する。ここで<code>G</code>を指定しないとuEFIでは起動できない。</p>
-
+</code></pre><p>と聞かれる。ディスク全体を使う場合は<code>G</code>を指定する。ここで<code>G</code>を指定しないとuEFIでは起動できない。</p>
 <p><code>G</code>を選択すると、パーティションを自動設定した場合のレイアウトが表示されたあと、
 自動設定を採用するか、変更するか聞かれる。</p>
-
 <pre><code>#                size           offset  fstype [fsize bsize   cpg]
   a:          2097152             1024  4.2BSD   2048 16384 12958 # /
   b:         33598688          2098176    swap                    # none
@@ -449,144 +384,80 @@ Which disk is the root disk? ('?' for details)[sd0]
   k:         12582912        171051680  4.2BSD   2048 16384 12958 # /usr/obj
   l:        629145536        183634624  4.2BSD   4096 32768 26062 # /home
 Use (A)uto layout, (E)dit auto layout, or create (C)ustom layout?[a]
-</code></pre>
-
-<p>自動で良ければ<code>a</code>を、自動設定をベースに変更するなら<code>E</code>を、カスタムなレイアウトにする場合は<code>C</code>を入力する。
+</code></pre><p>自動で良ければ<code>a</code>を、自動設定をベースに変更するなら<code>E</code>を、カスタムなレイアウトにする場合は<code>C</code>を入力する。
 パーティションの設定が終わると、パーティションを作成してフォーマットを始める。
 特に確認はないので、マルチブートをするときなど、既存のシステムを消さないように注意する。</p>
-
 <p>ファイルシステムの作成が終わったら、</p>
-
 <pre><code>Available disks are: sd1
 Which disk do you wish to initialize? (or 'done')[done]
-</code></pre>
-
-<p>と聞かれる。これ以上初期化するディスクが無ければ<code>done</code>を入力する。</p>
-
-<h3 id="1-10-インストールセットの指定">1.10 インストールセットの指定</h3>
-
+</code></pre><p>と聞かれる。これ以上初期化するディスクが無ければ<code>done</code>を入力する。</p>
+<h3 id="110-インストールセットの指定">1.10 インストールセットの指定</h3>
 <pre><code>Let's install the sets!
 Location of sets? (disk http or done)[http]
-</code></pre>
-
-<p>ネットワーク設定に成功した人は、httpを指定する。今回、私はファームウェアが足りずネットワーク設定に失敗したため<code>disk</code>を
+</code></pre><p>ネットワーク設定に成功した人は、httpを指定する。今回、私はファームウェアが足りずネットワーク設定に失敗したため<code>disk</code>を
 選択することにする。</p>
-
 <pre><code>Is the disk partition already mounted? [yes]
-</code></pre>
-
-<p>ディスクパーティションが既にマウントされているかだと？ディスクパーティションとは何を指すのかな。よくわからんので、デフォルトの<code>yes</code>で。</p>
-
+</code></pre><p>ディスクパーティションが既にマウントされているかだと？ディスクパーティションとは何を指すのかな。よくわからんので、デフォルトの<code>yes</code>で。</p>
 <pre><code>Pathname to the sets? (or 'done')[6.5/amd64]
-</code></pre>
-
-<p>しらんがな。ひとまずデフォルトで。</p>
-
+</code></pre><p>しらんがな。ひとまずデフォルトで。</p>
 <pre><code>The directory '6.5/amd64' dose not exist.
-</code></pre>
-
-<p>デスヨネー</p>
-
+</code></pre><p>デスヨネー</p>
 <pre><code>Pathname to the sets? (or 'done')[6.5/amd64]
-</code></pre>
-
-<p>では、<code>done</code>で逃げる。</p>
-
+</code></pre><p>では、<code>done</code>で逃げる。</p>
 <pre><code>Location of sets? (disk http or done)[disk]
-</code></pre>
-
-<p>もどった。<code>disk</code>を選択。</p>
-
+</code></pre><p>もどった。<code>disk</code>を選択。</p>
 <pre><code>Is the disk partition already mounted? [yes]
-</code></pre>
-
-<p>さっきはyesでダメだったので、<code>no</code>にする。</p>
-
+</code></pre><p>さっきはyesでダメだったので、<code>no</code>にする。</p>
 <pre><code>Available disks are: sd0 sd1
 Which is disj contains the install media? (or 'done') [sd1] 
-</code></pre>
-
-<p><code>sd1</code>がUSBメモリだったので、<code>sd1</code>を指定。</p>
-
+</code></pre><p><code>sd1</code>がUSBメモリだったので、<code>sd1</code>を指定。</p>
 <pre><code>a:     920512    1024  4.2BSD    2048  16384  16142
 i:        960      64   MSDOS
 Available sd1 partitions are: a i
 Which sd1 partition has the install sets? (or 'done')[a]
-</code></pre>
-
-<p>インストールメディアのUSBメモリは2つのパーティションに分かれているのか。
+</code></pre><p>インストールメディアのUSBメモリは2つのパーティションに分かれているのか。
 まぁインストールセットが入っているのは、きっと<code>a</code>でしょう。
 パーティションタイプが4.2BSDだし、なによりもサイズがでかい。</p>
-
 <pre><code>Pathname to the sets? (or 'done')[6.5/amd64]
-</code></pre>
-
-<p>これはデフォルトの<code>6.5/amd64</code>で。</p>
-
-<h3 id="1-11-インストールセットの選択">1.11 インストールセットの選択</h3>
-
+</code></pre><p>これはデフォルトの<code>6.5/amd64</code>で。</p>
+<h3 id="111-インストールセットの選択">1.11 インストールセットの選択</h3>
 <pre><code>Select sets by entering a set name, a file name pattern or 'all'. De-select
 sets by prepending a '-'. e.g.: '-games*'. Selected sets are labeled '[X]'.
     [X] bsd           [X] base65.tgz     [X] game65.tgz    [X] xfont65.tgz
     [X] bsd.mp        [X] comp65.tgz     [X] xbase65.tgz   [X] xserv65.tgz
     [X] bsd.rd        [X] man65.tgz      [X] xshare65.tgz
 Set name(s)? (or 'abort' or 'done)[done]
-</code></pre>
-
-<p>ここでは、インストールするセットを選択する。
+</code></pre><p>ここでは、インストールするセットを選択する。
 例えばサーバー用途で、X Window Systemがいらない場合は、<code>-x*</code>と入力すると、X関連のインストールセットが除外される。
 インストールするセットの指定がおわったら、<code>done</code>と入力するとインストールが始まる。</p>
-
 <p>ネットワークに接続できない状態でインストールすると、</p>
-
 <pre><code>Directory dose not contain SHA256.sig. Continue without verification? [no]
-</code></pre>
-
-<p>と言われるが、無い物は無いので、<code>yes</code>と回答する。</p>
-
-<h3 id="1-12-タイムゾーンの設定">1.12 タイムゾーンの設定</h3>
-
+</code></pre><p>と言われるが、無い物は無いので、<code>yes</code>と回答する。</p>
+<h3 id="112-タイムゾーンの設定">1.12 タイムゾーンの設定</h3>
 <pre><code>What timezone are you in? [Canada/Mountain]
-</code></pre>
-
-<p>タイムゾーンを聞かれるので、<code>Asia/Tokyo</code>と入力する。</p>
-
+</code></pre><p>タイムゾーンを聞かれるので、<code>Asia/Tokyo</code>と入力する。</p>
 <p>すると、</p>
-
 <pre><code>CONGRATIRATIONS! Your OpenBSD install has been successfully completed!
 
 When you login to your new system the first time, please read your mail
 using the 'mail' command.
 
 Exit to (S)hell, (H)alt or (R)eboot [reboot]
-</code></pre>
-
-<p>ひとまずインストールは成功したようだ。よかったよかった。</p>
-
+</code></pre><p>ひとまずインストールは成功したようだ。よかったよかった。</p>
 <p>rebootを選択して再起動しよう。</p>
-
 <h2 id="2-インストール後の設定">2. インストール後の設定</h2>
-
-<h3 id="2-1-ファームウェアのインストール">2.1 ファームウェアのインストール</h3>
-
-<h4 id="2-1-1-ファームウェアの取得">2.1.1 ファームウェアの取得</h4>
-
+<h3 id="21-ファームウェアのインストール">2.1 ファームウェアのインストール</h3>
+<h4 id="211-ファームウェアの取得">2.1.1 ファームウェアの取得</h4>
 <p>インストーラーに入っていないファームウェアをインストールする。
 今回は、ネットワークに接続していないので、手動でファームウェアをダウンロード・インストールする。
 まず、fw_updateコマンドで不足しているファームウェアを列挙する。</p>
-
 <pre><code># fw_update -i
 Missing: inteldrm-firmware iwm-firmware vmm-firmware intel-firmware
-</code></pre>
-
-<p><a href="http://firmware.openbsd.org/firmware/6.5">http://firmware.openbsd.org/firmware/6.5</a> にある、不足しているファームウェアおよび、SHA256.sigをダウンロードし、
+</code></pre><p><a href="http://firmware.openbsd.org/firmware/6.5">http://firmware.openbsd.org/firmware/6.5</a> にある、不足しているファームウェアおよび、SHA256.sigをダウンロードし、
 USBメモリにコピーする。</p>
-
-<h4 id="2-1-2-usbメモリのマウント">2.1.2 USBメモリのマウント</h4>
-
+<h4 id="212-usbメモリのマウント">2.1.2 USBメモリのマウント</h4>
 <p>他のPCでダウンロードしたファームウェアをUSBメモリ経由でインストールするために、USBメモリをマウントする。
 まずdisklabelコマンドで使用されているパーティションを調べる。</p>
-
 <pre><code># /dev/rsd1c:
 type: SCSI
 disk: SCSI disk
@@ -607,69 +478,42 @@ drivedata: 0
 #                size           offset  fstype [fsize bsize   cpg]
   c:        120938496                0  unused                    
   i:        120930432             8064   MSDOS 
-</code></pre>
-
-<p>どうやら<code>i</code>が、FATのパーティションのようである。</p>
-
+</code></pre><p>どうやら<code>i</code>が、FATのパーティションのようである。</p>
 <pre><code># mount /dev/sd1i /mnt
 # cd /mnt
 # ls
 SHA256.sig                                  iwm-firmware-0.20170105.tgz
 intel-firmware-20190514p0v0.tgz             vmm-firmware-1.11.0p1.tgz
 inteldrm-firmware-20181218.tgz
-</code></pre>
-
-<p>とすると、/mntにUSBメモリがマウントされる。</p>
-
-<h4 id="2-1-3-署名の検証">2.1.3 署名の検証</h4>
-
+</code></pre><p>とすると、/mntにUSBメモリがマウントされる。</p>
+<h4 id="213-署名の検証">2.1.3 署名の検証</h4>
 <p>ダウロードしたファイルが改竄されていないか、signifyコマンドで検証する。</p>
-
 <pre><code># signify -C -x SHA256.sig *.tgz
 Signature Verified
 intel-firmware-20190514p0v0.tgz: OK
 inteldrm-firmware-20181218.tgz: OK
 iwm-firmware-0.20170105.tgz: OK
 vmm-firmware-1.11.0p1.tgz: OK
-</code></pre>
-
-<p>signifyコマンドは、プリインストールされた公開鍵を使って、SHA256.sigに付されている電子署名を検証する。
+</code></pre><p>signifyコマンドは、プリインストールされた公開鍵を使って、SHA256.sigに付されている電子署名を検証する。
 その後各ファイルのSHA256ハッシュを計算し、検証することで改竄されていないことを検証することができる。</p>
-
-<h4 id="2-1-4-ファームウェアのインストール">2.1.4 ファームウェアのインストール</h4>
-
+<h4 id="214-ファームウェアのインストール">2.1.4 ファームウェアのインストール</h4>
 <p>fw_updateコマンドに、ダウンロードしたファームウェアパッケージがあるディレクトリを指定すると
 自動的にインストールしてくれる。
 例えば、<code>/mnt</code>にあるならな、以下のようになる。</p>
-
 <pre><code>fw_update -p /mnt
 intel-firmware-20190514p0v0.tgz: OK
 inteldrm-firmware-20181218.tgz: OK
 iwm-firmware-0.20170105.tgz: OK
 vmm-firmware-1.11.0p1.tgz: OK
-</code></pre>
-
-<p>インストールに成功したら、rebootしてファームウェアを有効にしよう。</p>
-
+</code></pre><p>インストールに成功したら、rebootしてファームウェアを有効にしよう。</p>
 <pre><code>shutdown -r now
-</code></pre>
-
-<h3 id="2-2-システムのアップデート">2.2 システムのアップデート</h3>
-
+</code></pre><h3 id="22-システムのアップデート">2.2 システムのアップデート</h3>
 <p>リリース後に公開されたパッチを適用する。</p>
-
 <p><code>syspatch</code>コマンドを実行すると、自動で未適用のパッチを調べ、ダウンロードし、適用してくれる。</p>
-
 <pre><code>syspatch
-</code></pre>
-
-<p>パッケージの更新は、</p>
-
+</code></pre><p>パッケージの更新は、</p>
 <pre><code>pkg_add -u
-</code></pre>
-
-<p>で自動で行われる。</p>
-
+</code></pre><p>で自動で行われる。</p>
 <p>Have Fun!</p>
 ]]></content>
 		</item>
@@ -681,45 +525,30 @@ vmm-firmware-1.11.0p1.tgz: OK
 			
 			<guid>https://www.omoikane.dev/posts/install-openbsd-in-encrypted-partition/</guid>
 			<description>TLDR; OpenBSDを、暗号化パーティションにインストールすることが可能である。 インストーラー実行時に、shellに落ちて暗号化パーティションを</description>
-			<content type="html"><![CDATA[
-
-<h2 id="tldr">TLDR;</h2>
-
+			<content type="html"><![CDATA[<h2 id="tldr">TLDR;</h2>
 <ul>
-<li><p>OpenBSDを、暗号化パーティションにインストールすることが可能である。</p></li>
-
-<li><p>インストーラー実行時に、shellに落ちて暗号化パーティションを作成し、そこにインストールすれば良い。</p></li>
+<li>
+<p>OpenBSDを、暗号化パーティションにインストールすることが可能である。</p>
+</li>
+<li>
+<p>インストーラー実行時に、shellに落ちて暗号化パーティションを作成し、そこにインストールすれば良い。</p>
+</li>
 </ul>
-
-<hr />
-
+<hr>
 <p>PCの盗難や紛失に備え、システムがインストールされているファイルシステムを暗号化することがある。
 また、個人情報等が入ったストレージデバイスを廃棄時の事や、クラウド上のインスタンスにアタッチされているディスクは
 ただのファイルであることを考えると、暗号化しておいたほうが安心だったりする。</p>
-
 <p>OpenBSDもLinux同様、暗号化パーティションへのインストールをサポートしている。</p>
-
 <p>以下に、OpenBSDを暗号化パーティションにインストールする方法を示す。</p>
-
 <h2 id="1-暗号化パーティションの作成">1. 暗号化パーティションの作成</h2>
-
 <p>OpenBSDのインストーラを起動すると、まず</p>
-
 <pre><code>Welcome to the OpenBSD/amd64 6。5 installation program.
 (I)nstall, (U)pgrade, (A)utoinstall or (S)hell?
-</code></pre>
-
-<p>と聞かれる。ここで<code>S</code>を選択し、Shellに落ちて暗号化パーティションを作成する。</p>
-
-<h3 id="1-0-ディスク全体を乱数で埋める">1.0 ディスク全体を乱数で埋める</h3>
-
+</code></pre><p>と聞かれる。ここで<code>S</code>を選択し、Shellに落ちて暗号化パーティションを作成する。</p>
+<h3 id="10-ディスク全体を乱数で埋める">1.0 ディスク全体を乱数で埋める</h3>
 <p>ディスク全体を一度乱数で埋めておくと、攻撃者にディスクイメージを取得されたとしても、解析が非常に困難になる。機微な情報を保存する必要がある場合は、ディスク全体を乱数で埋めておいたほうが良い。</p>
-
 <pre><code>dd if=/dev/urandom of=/dev/sd0 bs=1m
-</code></pre>
-
-<p>この処理には、非常に時間がかかる。乱数で埋める必要が無ければスキップしても問題ない。。</p>
-
+</code></pre><p>この処理には、非常に時間がかかる。乱数で埋める必要が無ければスキップしても問題ない。。</p>
 <h3 id="uefi-or-mbr">UEFI or MBR</h3>
 ]]></content>
 		</item>
@@ -731,40 +560,31 @@ vmm-firmware-1.11.0p1.tgz: OK
 			
 			<guid>https://www.omoikane.dev/posts/oat&#43;&#43;/</guid>
 			<description>大きめのデータ（といっても100万点のオーダだけど）を扱うWebアプリを作りたいのだが Pythonだと遅いので、C++で書きたい。 ということ</description>
-			<content type="html"><![CDATA[
-
-<p>大きめのデータ（といっても100万点のオーダだけど）を扱うWebアプリを作りたいのだが
+			<content type="html"><![CDATA[<p>大きめのデータ（といっても100万点のオーダだけど）を扱うWebアプリを作りたいのだが
 Pythonだと遅いので、C++で書きたい。
 ということで、oat++というC++で書かれたフレームワークがあったので、スケルトンコードを作成してみた。
 ドキュメントもあまり詳しくなく、ちょっと苦労したので忘れないようにblogで公開しておく。</p>
-
 <p>前述の通りoat++は、C++で書かれたWebフレームワークでパフォーマンスがべらぼうに良いらしい。
 まぁネイティブコードなのでそりゃ速いよねー もちろんオープンソース。
 さらに他のライブラリに依存しないのが使いやすそう。</p>
-
-<p>oat++のWebページは、<a href="https://oatpp.io">https://oatpp.io</a> GitHubのリポジトリは、 <a href="https://github.com/oatpp/oatpp">https://github.com/oatpp/oatpp</a> である。
+<p>oat++のWebページは、https://oatpp.io GitHubのリポジトリは、 <a href="https://github.com/oatpp/oatpp">https://github.com/oatpp/oatpp</a> である。
 今回は、Debian9 stretchでコンパイル、実行を行った。</p>
-
 <h2 id="インストール方法">インストール方法</h2>
 <div class="highlight"><pre class="chroma"><code class="language-shell" data-lang="shell">sudo apt-get -y install build-essential cmake git
 git clone https://github.com/oatpp/oatpp <span class="o">&amp;&amp;</span> mkdir oatpp/build
-<span class="nb">cd</span> oatpp/build <span class="o">&amp;&amp;</span> cmake .. <span class="o">&amp;&amp;</span> make <span class="o">&amp;&amp;</span> sudo make install</code></pre></div>
-<p>必要なパッケージは、build-essentialとcmakeがあれば特にいらない。gitでcloneしてbuildするだけ。
+<span class="nb">cd</span> oatpp/build <span class="o">&amp;&amp;</span> cmake .. <span class="o">&amp;&amp;</span> make <span class="o">&amp;&amp;</span> sudo make install
+</code></pre></div><p>必要なパッケージは、build-essentialとcmakeがあれば特にいらない。gitでcloneしてbuildするだけ。
 かんたんかんたん。</p>
-
 <h2 id="hello-world">Hello World</h2>
-
 <p>さて、ここからが本題。
 今回作成したコードは、以下の3つのファイルである。
 <a href="https://github.com/oatpp/example-crud">https://github.com/oatpp/example-crud</a> を参考にした。</p>
-
 <ul>
 <li>app.cc</li>
 <li>app_component.hh</li>
 <li>controller.hh</li>
 </ul>
-
-<h3 id="app-cc">app.cc</h3>
+<h3 id="appcc">app.cc</h3>
 <div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="c1">//app.cc
 </span><span class="c1"></span><span class="cp">#include</span> <span class="cpf">&#34;oatpp/network/server/Server.hpp&#34;</span><span class="cp">
 </span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
@@ -787,11 +607,8 @@ git clone https://github.com/oatpp/oatpp <span class="o">&amp;&amp;</span> mkdir
         <span class="n">run</span><span class="p">();</span>
         <span class="n">oatpp</span><span class="o">::</span><span class="n">base</span><span class="o">::</span><span class="n">Environment</span><span class="o">::</span><span class="n">destroy</span><span class="p">();</span>
         <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-</code></pre></div>
-<p>まずは、main関数が含まれるapp.cc。サーバの初期化と起動を行っている。</p>
-
-<h3 id="app-component-hh">app_component.hh</h3>
-
+</code></pre></div><p>まずは、main関数が含まれるapp.cc。サーバの初期化と起動を行っている。</p>
+<h3 id="app_componenthh">app_component.hh</h3>
 <p>次に、app_component.hhは、app.ccのrun関数で、serverを初期化に必要なオブジェクトインスタンスを作成するクラスAppComponentを
 定義している。</p>
 <div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="c1">// app_conponent.hh
@@ -808,7 +625,7 @@ git clone https://github.com/oatpp/oatpp <span class="o">&amp;&amp;</span> mkdir
 </span><span class="cm"> *  Class which creates and holds Application components and registers components in oatpp::base::Environment
 </span><span class="cm"> *  Order of components initialization is from top to bottom
 </span><span class="cm"> */</span>
-<span class="k">class</span><span class="err"> </span><span class="nc">AppComponent</span> <span class="p">{</span>
+<span class="k">class</span> <span class="nc">AppComponent</span> <span class="p">{</span>
         <span class="k">private</span><span class="o">:</span>
         <span class="k">static</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">PORT</span> <span class="o">=</span> <span class="mi">8000</span><span class="p">;</span>
 
@@ -836,17 +653,12 @@ git clone https://github.com/oatpp/oatpp <span class="o">&amp;&amp;</span> mkdir
 </span><span class="c1"></span>    <span class="k">return</span> <span class="n">oatpp</span><span class="o">::</span><span class="n">web</span><span class="o">::</span><span class="n">server</span><span class="o">::</span><span class="n">HttpConnectionHandler</span><span class="o">::</span><span class="n">createShared</span><span class="p">(</span><span class="n">router</span><span class="p">);</span>
   <span class="p">}());</span>  
 <span class="p">};</span>
-</code></pre></div>
-<p>OATPP_CREATE_COMPONENT マクロは、oatpp/core/macro/component.hpp で以下のように定義されている。</p>
+</code></pre></div><p>OATPP_CREATE_COMPONENT マクロは、oatpp/core/macro/component.hpp で以下のように定義されている。</p>
 <div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="cp">#define OATPP_CREATE_COMPONENT(TYPE, NAME) \
 </span><span class="cp">oatpp::base::Environment::Component&lt;TYPE&gt; NAME = oatpp::base::Environment::Component&lt;TYPE&gt;
-</span></code></pre></div>
-<p>変数を宣言しているだけでした。</p>
-
+</span></code></pre></div><p>変数を宣言しているだけでした。</p>
 <p>このクラスでは、ServerConnectionProvider、HttpRouter、HttpConnectionHandlerを作成している。</p>
-
-<h3 id="controller-hh">controller.hh</h3>
-
+<h3 id="controllerhh">controller.hh</h3>
 <p>そして、controller.hhでは、URLマッピングと呼ばれたときの処理を記述する、Controllerクラスを定義している。</p>
 <div class="highlight"><pre class="chroma"><code class="language-C++" data-lang="C++"><span class="c1">//controller.hh
 </span><span class="c1"></span><span class="cp">#pragma onece
@@ -858,7 +670,7 @@ git clone https://github.com/oatpp/oatpp <span class="o">&amp;&amp;</span> mkdir
 </span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;sstream&gt;</span><span class="cp">
 </span><span class="cp"></span>
-<span class="k">class</span><span class="err"> </span><span class="nc">Controller</span> <span class="o">:</span> <span class="k">public</span> <span class="n">oatpp</span><span class="o">::</span><span class="n">web</span><span class="o">::</span><span class="n">server</span><span class="o">::</span><span class="n">api</span><span class="o">::</span><span class="n">ApiController</span> <span class="p">{</span>
+<span class="k">class</span> <span class="nc">Controller</span> <span class="o">:</span> <span class="k">public</span> <span class="n">oatpp</span><span class="o">::</span><span class="n">web</span><span class="o">::</span><span class="n">server</span><span class="o">::</span><span class="n">api</span><span class="o">::</span><span class="n">ApiController</span> <span class="p">{</span>
 <span class="k">public</span><span class="o">:</span>
         <span class="n">Controller</span><span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">ObjectMapper</span><span class="o">&gt;&amp;</span> <span class="n">objectMapper</span><span class="p">)</span>
                 <span class="o">:</span> <span class="n">oatpp</span><span class="o">::</span><span class="n">web</span><span class="o">::</span><span class="n">server</span><span class="o">::</span><span class="n">api</span><span class="o">::</span><span class="n">ApiController</span><span class="p">(</span><span class="n">objectMapper</span><span class="p">)</span>
@@ -941,58 +753,43 @@ git clone https://github.com/oatpp/oatpp <span class="o">&amp;&amp;</span> mkdir
 
 <span class="cp">#include</span> <span class="cpf">OATPP_CODEGEN_END(ApiController)</span><span class="cp">
 </span><span class="cp"></span><span class="p">};</span>
-</code></pre></div>
-<p>各、URLマッピングは、ENDPOINTマクロを使用する。
+</code></pre></div><p>各、URLマッピングは、ENDPOINTマクロを使用する。
 ENDPOINTマクロは、OATPP_CODEGEN_BEGIN()と、OATPP_CODEGEN_END()で囲む。
 <code>#include OATPP_CODEGEN_BEGIN(ApiController)</code>は、<code>#include oatpp/codegen/codegen_define_ApiController_.hpp</code>に展開される。
 oatpp/codegen_define_ApiController_.hppでは、ENDPOINTマクロで使用するマクロ類が宣言されている。</p>
-
 <p>ENDPOINTマクロは、見てわかるように、<code>#define ENDPOINT(METHOD, PATH, NAME, ...)</code>と宣言されており、
 oatpp::web::protocol::http::outgoing::Response を返す関数に展開される。
 4番目以降のパラメータは、パラメータマッピングで、関数での処理に必要なリクエストパラメータを指定する。</p>
-
 <h4 id="parameter-mapping">Parameter Mapping</h4>
-
 <p>oat++には、以下のパラメータマッピングがある</p>
-
 <ul>
-<li><p>ヘッダ</p>
-
-<pre><code>HEADER(&lt;data-type&gt;, &lt;param-name&gt;, &quot;&lt;optional header-name&gt;&quot;)
-</code></pre></li>
-
-<li><p>パス</p>
-
-<pre><code>PATH(&lt;data-type&gt;, &lt;param-name&gt;, &quot;&lt;optional path-variable-name&gt;&quot;)
-</code></pre></li>
-
-<li><p>クエリ</p>
-
-<pre><code>QUERY(&lt;data-type&gt;, &lt;param-name&gt;, &quot;&lt;optional path-variable-name&gt;&quot;)
-</code></pre></li>
-
-<li><p>Body</p>
-
-<pre><code>BODY_STRING(String, &lt;param-name&gt;)
-</code></pre></li>
-
-<li><p>リクエスト</p>
-
-<pre><code>REQUEST(std::shared_ptr&lt;IncomingRequest&gt;, request)
-</code></pre></li>
-
-<li><p>DTO</p>
-
-<pre><code>BODY_DTO(&lt;DTO-class&gt;::ObjectWrapper, &lt;param-name&gt;)
-</code></pre></li>
+<li>ヘッダ</li>
 </ul>
-
-<p>パラメータマッピングは、<a href="https://oatpp.io/docs/components/api-controller/">https://oatpp.io/docs/components/api-controller/</a> にドキュメントがあるが、
+<pre><code>HEADER(&lt;data-type&gt;, &lt;param-name&gt;, &quot;&lt;optional header-name&gt;&quot;)
+</code></pre><ul>
+<li>パス</li>
+</ul>
+<pre><code>PATH(&lt;data-type&gt;, &lt;param-name&gt;, &quot;&lt;optional path-variable-name&gt;&quot;)
+</code></pre><ul>
+<li>クエリ</li>
+</ul>
+<pre><code>QUERY(&lt;data-type&gt;, &lt;param-name&gt;, &quot;&lt;optional path-variable-name&gt;&quot;)
+</code></pre><ul>
+<li>Body</li>
+</ul>
+<pre><code>BODY_STRING(String, &lt;param-name&gt;)
+</code></pre><ul>
+<li>リクエスト</li>
+</ul>
+<pre><code>REQUEST(std::shared_ptr&lt;IncomingRequest&gt;, request)
+</code></pre><ul>
+<li>DTO</li>
+</ul>
+<pre><code>BODY_DTO(&lt;DTO-class&gt;::ObjectWrapper, &lt;param-name&gt;)
+</code></pre><p>パラメータマッピングは、https://oatpp.io/docs/components/api-controller/ にドキュメントがあるが、
 正直、どう書くのかほとんどわからなかった。
 前掲の<code>controller.hh</code>がサンプルになっていると思う。</p>
-
 <p>data-typeは、以下の型が使えることを確認した。Booleanも使えるかも。</p>
-
 <ul>
 <li>String</li>
 <li>Int32</li>
@@ -1000,9 +797,7 @@ oatpp::web::protocol::http::outgoing::Response を返す関数に展開される
 <li>Float32</li>
 <li>Float64</li>
 </ul>
-
 <h2 id="makefile">Makefile</h2>
-
 <p>一応、Makefileも。</p>
 <div class="highlight"><pre class="chroma"><code class="language-Makefile" data-lang="Makefile"><span class="nv">CXX</span><span class="o">=</span>g++
 <span class="nv">CXXFLAGS</span><span class="o">=</span>-I /usr/local/include/oatpp-0.19.4/oatpp --std<span class="o">=</span>c++11 -w -Wall
@@ -1020,8 +815,7 @@ oatpp::web::protocol::http::outgoing::Response を返す関数に展開される
 
 <span class="nf">clean</span><span class="o">:</span>
         rm -f app *.o
-</code></pre></div>
-<p>Have Fan!</p>
+</code></pre></div><p>Have Fan!</p>
 ]]></content>
 		</item>
 		
@@ -1032,40 +826,28 @@ oatpp::web::protocol::http::outgoing::Response を返す関数に展開される
 			
 			<guid>https://www.omoikane.dev/posts/openbsd-ipv6-sakura/</guid>
 			<description>TL;DR OpenBSD 6.4をインストールしたVPSでIPv6のデフォルトゲートウェイに接続できない時は、 SIIを無効にすること。例えば、さくらインターネット</description>
-			<content type="html"><![CDATA[
-
-<h2 id="tl-dr">TL;DR</h2>
-
+			<content type="html"><![CDATA[<h2 id="tldr">TL;DR</h2>
 <p>OpenBSD 6.4をインストールしたVPSでIPv6のデフォルトゲートウェイに接続できない時は、
 SIIを無効にすること。例えば、さくらインターネットの場合、hostname.vio0は以下のようになる。</p>
-
 <pre><code>inet  203.0.113.23 255.255.254.0
 inet6 autoconf -autoconfprivacy -soii
 inet6 alias 2001:db8:102:3013:203:0:113:23 64
 up
 !route -nq add -inet6 default fe80::1%vio0
-</code></pre>
-
-<hr />
-
+</code></pre><hr>
 <p>OpenBSDをインストールしたさくらVPSのインスタンスでIPv6の
 デフォルトゲートウェイと通信できなくてハマった。
 なんとか解決できたのでメモ。</p>
-
 <p>さくらVPSは、グローバルIPv6のIPを一つくれる。
 そのゲートウェイはfe80::1である。</p>
-
 <p>OpenBSD 6.3あたりから、Semantically Opaque Interface Identifiers (SOIIs) がデフォルトで有効になっている。
 SOIIとはSLAACアドレス（自動で設定されるリンクローカルアドレス）のインターフェース識別子(IID)にMACアドレスを使わずに、
 プレフィックスも使ってIIDを生成することで、リングローカルアドレスを生成するというもの（RFC7217）。</p>
-
 <p>以前は、MACアドレスだけからリンクローカルアドレスを生成していた（Modified EUI-64）ため、プレフィックスが変化しても
 リンクローカルアドレスから容易にMACアドレスが特定でき、プライバシーやセキュリティの問題があった。
 OpenBSDはそれをいやがって、SOIIをデフォルトで有効にしたのだろう。</p>
-
 <p>一方、さくらのゲートウェイは、IIDをMACアドレスから生成する昔ながらのModified EUI-64を前提にフィルタリングしている
 と思われる。そのため、SOIIで生成されたアドレスはフィルターされIPv6でインターネットに接続できなかったのだろう。</p>
-
 <p>SIIを無効にするには、上記の例のように、ifconfigのオプションに、-soiiをつける。詳細は、ifconfigのmanページを参照のこと。</p>
 ]]></content>
 		</item>
@@ -1079,7 +861,6 @@ OpenBSDはそれをいやがって、SOIIをデフォルトで有効にしたの
 			<description>操作ミスで、メールサーバやらWebサーバをホストしていたさくらのVPSを飛ばしてしまったので、 ドメインも変えてやりなおすことにしました。 この</description>
 			<content type="html"><![CDATA[<p>操作ミスで、メールサーバやらWebサーバをホストしていたさくらのVPSを飛ばしてしまったので、
 ドメインも変えてやりなおすことにしました。</p>
-
 <p>このblogはガチ技術よりにしようかと思っています。どうぞよろしくお願いします。</p>
 ]]></content>
 		</item>
