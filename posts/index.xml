@@ -15,9 +15,8 @@
 			<pubDate>Sat, 30 May 2020 00:00:00 +0900</pubDate>
 			
 			<guid>https://www.omoikane.dev/posts/capturing-microscope/</guid>
-			<description>自分用メモ ずいぶん前にaliexpressで購入した、LCD顕微鏡をLinux PCで取りこめた。 何をいまさら感が漂っているだろうが、自分用に</description>
-			<content type="html"><![CDATA[<p>自分用メモ</p>
-<p>ずいぶん前にaliexpressで購入した、LCD顕微鏡をLinux PCで取りこめた。
+			<description>ずいぶん前にaliexpressで購入したLCD顕微鏡画像をLinux PCで取りむことができた。 何をいまさら感が漂っているだろうが、自分用に</description>
+			<content type="html"><![CDATA[<p>ずいぶん前にaliexpressで購入したLCD顕微鏡画像をLinux PCで取りむことができた。
 何をいまさら感が漂っているだろうが、自分用にメモしておく。</p>
 <p>現在、使用している顕微鏡はこれ。型番は不明。同僚にaliexpressから買ってもらったもの。</p>
 <p><img src="./microscope.png" alt="aliexpressで買った型番不明のLCD顕微鏡"></p>
@@ -30,7 +29,7 @@ TIGA   Device: TIGA   Device (usb-0000:00:14.0-2.3):
         /dev/video1
         /dev/media0
 </code></pre><p>おぉ。見えている。サポートしているフォーマットを確認する。</p>
-<pre><code> v4l2-ctl --list-formats-ext
+<pre><code>$ v4l2-ctl --list-formats-ext
 ioctl: VIDIOC_ENUM_FMT
         Type: Video Capture
 
@@ -50,11 +49,13 @@ ioctl: VIDIOC_ENUM_FMT
                 Size: Discrete 176x144
                         Interval: Discrete 0.067s (15.000 fps)
                         Interval: Discrete 0.200s (5.000 fps)
-</code></pre><p>640x480 30fpsをサポートしているようだ。vlcで見えるか確認。</p>
+</code></pre><p>640x480 30fpsをサポートしているようだ。</p>
 <p>vlcを起動して、[メディア]→[キャプチャーデバイスを開く]→[詳細設定オプション]
-をクリックする。幅と高さに640、480を、フレームレートに30を入力してOKボタンを押下。
-その後、再生ボタン押下で取り込みが始まる。
-<img src="./captured.png" alt="取り込まれた顕微鏡画像"></p>
+をクリックする。幅と高さに640、480を、フレームレートに30を入力する。
+他はデフォルトのままでOK。</p>
+<p><img src="./dialog.png" alt="詳細設定オプションダイアログ"></p>
+<p>入力したらOKボタンでダイアログを閉じ、再生ボタン押下で取り込みが始まる。</p>
+<p><img src="./captured.png" alt="取り込まれた顕微鏡画像"></p>
 <p>もちろんvlcでスナップショットも取れる。これまでLDCをデジカメで撮ってたけど
 これでいろいろはかどる。</p>
 ]]></content>
