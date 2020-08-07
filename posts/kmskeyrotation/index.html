@@ -138,7 +138,7 @@ AWSのAPIドキュメントに、ReEncryptというActionがあるのに気が�
     &quot;DestinationEncryptionAlgorithm&quot;: &quot;SYMMETRIC_DEFAULT&quot;
 }
 </code></pre><p>おーできたー</p>
-<p>CybertextBlobのBase64エンコードを解いてre-encrypted_datakey.binに格納したあと、再暗号化に使用した鍵で複合する。</p>
+<p>CybertextBlobのBase64エンコードを解いてre-encrypted_datakey.binに格納したあと、再暗号化に使用した鍵で復号する。</p>
 <pre><code>$ aws kms decrypt --key-id 0676925f-cf0f-4dd3-b44e-28019abc4b4f --ciphertext-blob fileb://re-encrypted_datakey.bin --output text --query Plaintext|base64 -d &gt;decrypted_datakey.bin
 </code></pre><p>で、オリジナルのハッシュと比較する。</p>
 <pre><code>$ sha256sum datakey.bin decrypted_datakey.bin 
@@ -159,7 +159,7 @@ AWSのAPIドキュメントに、ReEncryptというActionがあるのに気が�
 <li>古い鍵の削除予約 (ScheduleKeyDeletion)</li>
 </ol>
 <h2 id="まとめ">まとめ<a href="#まとめ" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
-<p>KMSの手動によるキーローテーションでは、ReEnclyptオペレーションを使うとData KeyのCMKを変更することができる。古い鍵を有効にしておくこともできるが、鍵一つにつき1USD/monthのキーストレージの使用料金がかかってしまう。また、ローテーションするときには、新しい鍵を生成後、Aliasを新しい鍵に継承したあと、Data Keyの再暗号化処理を行うと良い。</p>
+<p>KMSの手動によるキーローテーションでは、ReEncryptオペレーションを使うとData KeyのCMKを変更することができる。古い鍵を有効にしておくこともできるが、鍵一つにつき1USD/monthのキーストレージの使用料金がかかってしまう。また、ローテーションするときには、新しい鍵を生成後、Aliasを新しい鍵に継承したあと、Data Keyの再暗号化処理を行うと良い。</p>
 
 			</div>
 			<hr class="post-end">
