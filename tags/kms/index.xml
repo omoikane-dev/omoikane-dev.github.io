@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>kms on omoikane.dev</title>
+    <link>https://www.omoikane.dev/tags/kms/</link>
+    <description>Recent content in kms on omoikane.dev</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
+    <lastBuildDate>Fri, 07 Aug 2020 16:50:59 +0900</lastBuildDate>
+    
+	<atom:link href="https://www.omoikane.dev/tags/kms/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>AWS KMSでの手動キーローテーション</title>
+      <link>https://www.omoikane.dev/posts/kmskeytotation/</link>
+      <pubDate>Fri, 07 Aug 2020 16:50:59 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/posts/kmskeytotation/</guid>
+      <description>TLDR あるAWS Security関連の教科書に、KMSの手動ローテーションは、鍵を新規作成して 古い鍵を削除する旨の記述があり、「古い鍵を削除した</description>
+    </item>
+    
+    <item>
+      <title>AWS KMSによる、データの暗号化と復号 - 対称鍵編</title>
+      <link>https://www.omoikane.dev/posts/kmsdemo2/</link>
+      <pubDate>Fri, 07 Aug 2020 16:48:41 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/posts/kmsdemo2/</guid>
+      <description>対称鍵はかんたん。 鍵の作成 Management ConsoleでもCLIでもお好みで。 以下のパラメータでCMK (Customer Management Key)を作成する。 キーのタイプ: 対称 キーマテ</description>
+    </item>
+    
+    <item>
+      <title>AWS KMSによる、データの暗号化と復号 - 非対称鍵（RSA_4096）編</title>
+      <link>https://www.omoikane.dev/posts/kmsdemo1/</link>
+      <pubDate>Fri, 07 Aug 2020 16:41:49 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/posts/kmsdemo1/</guid>
+      <description>AWS KMSでを使ったデータの暗号化、復号の検証も行った。 対称鍵の検証は、別記事にした。 鍵の作成 Management ConsoleでもCLIでもお好みで。 以下のパ</description>
+    </item>
+    
+  </channel>
+</rss>

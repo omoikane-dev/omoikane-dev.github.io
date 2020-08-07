@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+<meta itemprop="name" content="AWS KMSでの手動キーローテーション">
+<meta itemprop="description" content="TLDR あるAWS Security関連の教科書に、KMSの手動ローテーションは、鍵を新規作成して 古い鍵を削除する旨の記述があり、「古い鍵を削除した">
+<meta itemprop="datePublished" content="2020-08-07T16:50:59+09:00" />
+<meta itemprop="dateModified" content="2020-08-07T16:50:59+09:00" />
+<meta itemprop="wordCount" content="1797">
+
+
+
+<meta itemprop="keywords" content="aws,kms," />
+<meta property="og:title" content="AWS KMSでの手動キーローテーション" />
+<meta property="og:description" content="TLDR あるAWS Security関連の教科書に、KMSの手動ローテーションは、鍵を新規作成して 古い鍵を削除する旨の記述があり、「古い鍵を削除した" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.omoikane.dev/posts/kmskeytotation/" />
+<meta property="article:published_time" content="2020-08-07T16:50:59+09:00" />
+<meta property="article:modified_time" content="2020-08-07T16:50:59+09:00" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="AWS KMSでの手動キーローテーション"/>
+<meta name="twitter:description" content="TLDR あるAWS Security関連の教科書に、KMSの手動ローテーションは、鍵を新規作成して 古い鍵を削除する旨の記述があり、「古い鍵を削除した"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>AWS KMSでの手動キーローテーション</title>
+	<link rel="stylesheet" href="https://www.omoikane.dev/css/style.min.6a2d94be52e9f033aff88558e28aa96de11244b0a70e7537f6c33589e8d2d124.css" integrity="sha256-ai2UvlLp8DOv+IVY4oqpbeESRLCnDnU39sM1iejS0SQ=">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://www.omoikane.dev">omoikane.dev</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://www.omoikane.dev/posts/">Posts</a>
+					<a href="https://www.omoikane.dev/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<button id="toc-btn" class="hdr-btn desktop-only-ib" title="Table of Contents"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-list"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3" y2="6"></line><line x1="3" y1="12" x2="3" y2="12"></line><line x1="3" y1="18" x2="3" y2="18"></line></svg></button><span class="hdr-social hide-in-mobile"><a href="https://twitter.com/jm6xxu" target="_blank" rel="noopener" title="Twitter"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-twitter"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg></a><a href="https://github.com/chomy" target="_blank" rel="noopener" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://www.omoikane.dev/posts/">Posts</a></li>
+			<li><a href="https://www.omoikane.dev/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Aug 7, 2020</span></div>
+				<h1>AWS KMSでの手動キーローテーション</h1>
+			</header>
+			<div class="content">
+				<h2 id="tldr">TLDR<a href="#tldr" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>あるAWS Security関連の教科書に、KMSの手動ローテーションは、鍵を新規作成して
+古い鍵を削除する旨の記述があり、「古い鍵を削除したら復号できなくなるじゃないのか？」
+と思ったので検証してみた。</p>
+<p>KMSのAPIに、ReEncryptというキーローテーションのためのAPIが用意されており、これを使うと、新しい鍵でData Keyを再暗号化できる。
+よって管理しているData Keyをすべて再暗号化すれば、ローテーションされた古い鍵を削除することができる。</p>
+<p>また手動キーローテーションは、以下の手順がよさそうだ。</p>
+<ol>
+<li>新しい鍵を生成 (CreateKey)</li>
+<li>ローテートする鍵のエイリアスを新しい鍵に継承 (UpdateAlias)</li>
+<li>古い鍵で暗号化したData Keyを新しい鍵で再暗号化 (ReEncrypt)</li>
+<li>古い鍵の削除予約 (ScheduleKeyDeletion)</li>
+</ol>
+<hr>
+<h2 id="introduction">Introduction<a href="#introduction" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>AWS KMS 開発者ガイドの<a href="https://docs.aws.amazon.com/ja_jp/kms/latest/developerguide/rotate-keys.html">手動でのキーローテーション</a>には、以下の注釈がある。</p>
+<blockquote>
+<p>新しい CMK の使用を開始するときに、元の CMK を有効なままにすれば、AWS KMS は元の CMK により暗号化されたデータを復号できます。データを復号するとき、KMS はデータの暗号化に使用された CMK を識別し、同じ CMK を使用して復号します。元の CMK と新しいものの両方が有効である限り、AWS KMS はどちらの CMK によって暗号化されたデータでも復号できます。</p>
+</blockquote>
+<p>鍵が有効、すなわち削除または無効化しなければ復号できるとある。まぁそれはそうだろう。
+しかしこれは、教科書とは異なっているため、検証してみた。</p>
+<h2 id="鍵の削除保留期間中に復号可能かどうか確認">鍵の削除保留期間中に復号可能かどうか確認<a href="#鍵の削除保留期間中に復号可能かどうか確認" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>まず、前回作成した鍵を削除予約し、削除保留状態にする。</p>
+<pre><code>$ aws kms schedule-key-deletion --key-id a99dd0c2-494f-4650-99ba-811078e86390
+{
+    &quot;KeyId&quot;: &quot;arn:aws:kms:ap-northeast-1:xxxxxxxxxxxxx:key/a99dd0c2-494f-4650-99ba-811078e86390&quot;,
+    &quot;DeletionDate&quot;: 1599436800.0
+}
+</code></pre><p>鍵の状態を確認すると、<code>PendingDeletion</code>になっており、削除保留状態であることがわかる。</p>
+<pre><code>$ aws kms describe-key --key-id a99dd0c2-494f-4650-99ba-811078e86390 \
+ 	--output text  --query KeyMetadata.KeyState
+PendingDeletion
+</code></pre><p>では、この鍵を使って復号するとどうなるか。</p>
+<pre><code>$ aws kms decrypt --ciphertext-blob  fileb://encrypted_datakey.bin \
+	--key-id a99dd0c2-494f-4650-99ba-811078e86390
+
+An error occurred (KMSInvalidStateException) when calling the Decrypt operation: arn:aws:kms:ap-northeast-1:xxxxxxxxxxxxx:key/a99dd0c2-494f-4650-99ba-811078e86390 is pending deletion.
+</code></pre><p>ですよねー</p>
+<p>ちなみに無効のときも、ちゃんとエラーが返る。</p>
+<pre><code>$ aws kms decrypt --ciphertext-blob  fileb://encrypted_datakey.bin \
+	--key-id a99dd0c2-494f-4650-99ba-811078e86390
+
+An error occurred (DisabledException) when calling the Decrypt operation: arn:aws:kms:ap-northeast-1:xxxxxxxxxxxxx:key/a99dd0c2-494f-4650-99ba-811078e86390 is disabled.
+</code></pre><h2 id="data-key-reencryption">Data Key ReEncryption<a href="#data-key-reencryption" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>なーんだ、教科書まちがってんじゃん。まぁよくあるよねーで済まそうと思っていたのだが、
+AWSのAPIドキュメントに、ReEncryptというActionがあるのに気がついた。
+<a href="https://docs.aws.amazon.com/ja_jp/kms/latest/APIReference/API_ReEncrypt.html">KMS APIドキュメントのReEncrypt</a>の冒頭に以下の記述がある。</p>
+<blockquote>
+<p>Decrypts ciphertext and then reencrypts it entirely within AWS KMS. You can use this operation to change the customer master key (CMK) under which data is encrypted, such as when you manually rotate a CMK or change the CMK that protects a ciphertext.<br>
+（AWS KMSの内部で暗号化されたデータを復号したあと、再暗号化する。
+この操作は、手動ローテートまたはデータを保護しているCMKの変更といった、
+暗号化されたデータのCMKの変更に使用することができる。）</p>
+</blockquote>
+<p>あーCMKのmanually rotateに使うって書いてあるよ。
+ということで、Data Keyを新しい鍵で再暗号化することで、古い鍵を削除することができるようだ。</p>
+<p>せっかくなので、検証。</p>
+<pre><code>$ aws kms re-encrypt --ciphertext-blob fileb://encrypted_datakey.bin \
+    --source-key-id a99dd0c2-494f-4650-99ba-811078e86390 \
+    --destination-key-id 0676925f-cf0f-4dd3-b44e-28019abc4b4f
+{
+    &quot;CiphertextBlob&quot;: &quot;AQICAHiU/sFZekLEdu8fd/KEweZKipeRYu7IFuTQhYEqP/GM5wEBgW7RhOZ5GNPgKKOIcPrTAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMMLNzPFHv5pC5TMKeAgEQgDvrQ+/LP8dwZy/joqeZIa8bnbfzKEfTHEXxsrWtRZyhOCcJhMTqhBPf7KhruU2kMqDIeA7ZhyRs8I93fQ==&quot;,
+    &quot;SourceKeyId&quot;: &quot;arn:aws:kms:ap-northeast-1:xxxxxxxxxxxxx:key/a99dd0c2-494f-4650-99ba-811078e86390&quot;,
+    &quot;KeyId&quot;: &quot;arn:aws:kms:ap-northeast-1:xxxxxxxxxxxxx:key/0676925f-cf0f-4dd3-b44e-28019abc4b4f&quot;,
+    &quot;SourceEncryptionAlgorithm&quot;: &quot;SYMMETRIC_DEFAULT&quot;,
+    &quot;DestinationEncryptionAlgorithm&quot;: &quot;SYMMETRIC_DEFAULT&quot;
+}
+</code></pre><p>おーできたー</p>
+<p>CybertextBlobのBase64エンコードを解いてre-encrypted_datakey.binに格納したあと、再暗号化に使用した鍵で複合する。</p>
+<pre><code>$ aws kms decrypt --key-id 0676925f-cf0f-4dd3-b44e-28019abc4b4f --ciphertext-blob fileb://re-encrypted_datakey.bin --output text --query Plaintext|base64 -d &gt;decrypted_datakey.bin
+</code></pre><p>で、オリジナルのハッシュと比較する。</p>
+<pre><code>$ sha256sum datakey.bin decrypted_datakey.bin 
+0ce2033e1f0aff4508ebf82612e59c449d11bf0e5e50a6ac7fc95337989f9b84  datakey.bin
+0ce2033e1f0aff4508ebf82612e59c449d11bf0e5e50a6ac7fc95337989f9b84  decrypted_datakey.bin
+</code></pre><p>一致した。ということで、Data Keyの再暗号化に成功したことがわかる。</p>
+<h2 id="key-aliasの継承">Key aliasの継承<a href="#key-aliasの継承" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>鍵のローテーションにより、Key aliasを新しい鍵に継承する必要がある。
+そこで、UpdateAliasオペレーションをつかう。</p>
+<pre><code>$ aws kms update-alias --alias-name alias/aestest --target-key-id 0676925f-cf0f-4dd3-b44e-28019abc4b4f
+</code></pre><p>このオペレーションには、KeyPolicyの他に、<code>kms:UpdateAlias</code> を含むIAMロールが必要なので注意。</p>
+<p>継承が終わったあと、古い鍵はまだ有効であるが、Aliasは削除されている。
+よって、手動の鍵のローテーションは以下の手順が良さそうだ。</p>
+<ol>
+<li>新しい鍵を生成 (CreateKey)</li>
+<li>ローテートする鍵のエイリアスを新しい鍵に継承 (UpdateAlias)</li>
+<li>古い鍵で暗号化したData Keyを新しい鍵で再暗号化 (ReEncrypt)</li>
+<li>古い鍵の削除予約 (ScheduleKeyDeletion)</li>
+</ol>
+<h2 id="まとめ">まとめ<a href="#まとめ" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+<p>KMSの手動によるキーローテーションでは、ReEnclyptオペレーションを使うとData KeyのCMKを変更することができる。古い鍵を有効にしておくこともできるが、鍵一つにつき1USD/monthのキーストレージの使用料金がかかってしまう。また、ローテーションするときには、新しい鍵を生成後、Aliasを新しい鍵に継承したあと、Data Keyの再暗号化処理を行うと良い。</p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://www.omoikane.dev/tags/aws">aws</a></span><span class="tag"><a href="https://www.omoikane.dev/tags/kms">kms</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>1797 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-08-07 16:50 &#43;0900</p>
+			</footer>
+		</article>
+		<aside id="toc">
+			<div class="toc-title">Table of Contents</div>
+			<nav id="TableOfContents">
+  <ul>
+    <li><a href="#tldr">TLDR</a></li>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#鍵の削除保留期間中に復号可能かどうか確認">鍵の削除保留期間中に復号可能かどうか確認</a></li>
+    <li><a href="#data-key-reencryption">Data Key ReEncryption</a></li>
+    <li><a href="#key-aliasの継承">Key aliasの継承</a></li>
+    <li><a href="#まとめ">まとめ</a></li>
+  </ul>
+</nav>
+		</aside>
+		<div class="post-nav thin">
+			<a class="prev-post" href="https://www.omoikane.dev/posts/kmsdemo2/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>AWS KMSによる、データの暗号化と復号 - 対称鍵編</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2020 <a href="https://www.omoikane.dev">omoikane</a> &#183; <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://www.omoikane.dev/posts/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://www.omoikane.dev/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js" integrity="sha256-eEQX9YRxUfhIwznPCssToGy7ZIsUg0NaKO1FVsTq1ps="></script>
+
+</body>
+
+</html>

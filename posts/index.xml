@@ -6,8 +6,321 @@
 		<generator>Hugo -- gohugo.io</generator>
 		<language>en-us</language>
 		<copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-		<lastBuildDate>Sat, 30 May 2020 00:00:00 +0900</lastBuildDate>
+		<lastBuildDate>Fri, 07 Aug 2020 16:50:59 +0900</lastBuildDate>
 		<atom:link href="https://www.omoikane.dev/posts/index.xml" rel="self" type="application/rss+xml" />
+		
+		<item>
+			<title>AWS KMSでの手動キーローテーション</title>
+			<link>https://www.omoikane.dev/posts/kmskeytotation/</link>
+			<pubDate>Fri, 07 Aug 2020 16:50:59 +0900</pubDate>
+			
+			<guid>https://www.omoikane.dev/posts/kmskeytotation/</guid>
+			<description>TLDR あるAWS Security関連の教科書に、KMSの手動ローテーションは、鍵を新規作成して 古い鍵を削除する旨の記述があり、「古い鍵を削除した</description>
+			<content type="html"><![CDATA[<h2 id="tldr">TLDR</h2>
+<p>あるAWS Security関連の教科書に、KMSの手動ローテーションは、鍵を新規作成して
+古い鍵を削除する旨の記述があり、「古い鍵を削除したら復号できなくなるじゃないのか？」
+と思ったので検証してみた。</p>
+<p>KMSのAPIに、ReEncryptというキーローテーションのためのAPIが用意されており、これを使うと、新しい鍵でData Keyを再暗号化できる。
+よって管理しているData Keyをすべて再暗号化すれば、ローテーションされた古い鍵を削除することができる。</p>
+<p>また手動キーローテーションは、以下の手順がよさそうだ。</p>
+<ol>
+<li>新しい鍵を生成 (CreateKey)</li>
+<li>ローテートする鍵のエイリアスを新しい鍵に継承 (UpdateAlias)</li>
+<li>古い鍵で暗号化したData Keyを新しい鍵で再暗号化 (ReEncrypt)</li>
+<li>古い鍵の削除予約 (ScheduleKeyDeletion)</li>
+</ol>
+<hr>
+<h2 id="introduction">Introduction</h2>
+<p>AWS KMS 開発者ガイドの<a href="https://docs.aws.amazon.com/ja_jp/kms/latest/developerguide/rotate-keys.html">手動でのキーローテーション</a>には、以下の注釈がある。</p>
+<blockquote>
+<p>新しい CMK の使用を開始するときに、元の CMK を有効なままにすれば、AWS KMS は元の CMK により暗号化されたデータを復号できます。データを復号するとき、KMS はデータの暗号化に使用された CMK を識別し、同じ CMK を使用して復号します。元の CMK と新しいものの両方が有効である限り、AWS KMS はどちらの CMK によって暗号化されたデータでも復号できます。</p>
+</blockquote>
+<p>鍵が有効、すなわち削除または無効化しなければ復号できるとある。まぁそれはそうだろう。
+しかしこれは、教科書とは異なっているため、検証してみた。</p>
+<h2 id="鍵の削除保留期間中に復号可能かどうか確認">鍵の削除保留期間中に復号可能かどうか確認</h2>
+<p>まず、前回作成した鍵を削除予約し、削除保留状態にする。</p>
+<pre><code>$ aws kms schedule-key-deletion --key-id a99dd0c2-494f-4650-99ba-811078e86390
+{
+    &quot;KeyId&quot;: &quot;arn:aws:kms:ap-northeast-1:xxxxxxxxxxxxx:key/a99dd0c2-494f-4650-99ba-811078e86390&quot;,
+    &quot;DeletionDate&quot;: 1599436800.0
+}
+</code></pre><p>鍵の状態を確認すると、<code>PendingDeletion</code>になっており、削除保留状態であることがわかる。</p>
+<pre><code>$ aws kms describe-key --key-id a99dd0c2-494f-4650-99ba-811078e86390 \
+ 	--output text  --query KeyMetadata.KeyState
+PendingDeletion
+</code></pre><p>では、この鍵を使って復号するとどうなるか。</p>
+<pre><code>$ aws kms decrypt --ciphertext-blob  fileb://encrypted_datakey.bin \
+	--key-id a99dd0c2-494f-4650-99ba-811078e86390
+
+An error occurred (KMSInvalidStateException) when calling the Decrypt operation: arn:aws:kms:ap-northeast-1:xxxxxxxxxxxxx:key/a99dd0c2-494f-4650-99ba-811078e86390 is pending deletion.
+</code></pre><p>ですよねー</p>
+<p>ちなみに無効のときも、ちゃんとエラーが返る。</p>
+<pre><code>$ aws kms decrypt --ciphertext-blob  fileb://encrypted_datakey.bin \
+	--key-id a99dd0c2-494f-4650-99ba-811078e86390
+
+An error occurred (DisabledException) when calling the Decrypt operation: arn:aws:kms:ap-northeast-1:xxxxxxxxxxxxx:key/a99dd0c2-494f-4650-99ba-811078e86390 is disabled.
+</code></pre><h2 id="data-key-reencryption">Data Key ReEncryption</h2>
+<p>なーんだ、教科書まちがってんじゃん。まぁよくあるよねーで済まそうと思っていたのだが、
+AWSのAPIドキュメントに、ReEncryptというActionがあるのに気がついた。
+<a href="https://docs.aws.amazon.com/ja_jp/kms/latest/APIReference/API_ReEncrypt.html">KMS APIドキュメントのReEncrypt</a>の冒頭に以下の記述がある。</p>
+<blockquote>
+<p>Decrypts ciphertext and then reencrypts it entirely within AWS KMS. You can use this operation to change the customer master key (CMK) under which data is encrypted, such as when you manually rotate a CMK or change the CMK that protects a ciphertext.<br>
+（AWS KMSの内部で暗号化されたデータを復号したあと、再暗号化する。
+この操作は、手動ローテートまたはデータを保護しているCMKの変更といった、
+暗号化されたデータのCMKの変更に使用することができる。）</p>
+</blockquote>
+<p>あーCMKのmanually rotateに使うって書いてあるよ。
+ということで、Data Keyを新しい鍵で再暗号化することで、古い鍵を削除することができるようだ。</p>
+<p>せっかくなので、検証。</p>
+<pre><code>$ aws kms re-encrypt --ciphertext-blob fileb://encrypted_datakey.bin \
+    --source-key-id a99dd0c2-494f-4650-99ba-811078e86390 \
+    --destination-key-id 0676925f-cf0f-4dd3-b44e-28019abc4b4f
+{
+    &quot;CiphertextBlob&quot;: &quot;AQICAHiU/sFZekLEdu8fd/KEweZKipeRYu7IFuTQhYEqP/GM5wEBgW7RhOZ5GNPgKKOIcPrTAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMMLNzPFHv5pC5TMKeAgEQgDvrQ+/LP8dwZy/joqeZIa8bnbfzKEfTHEXxsrWtRZyhOCcJhMTqhBPf7KhruU2kMqDIeA7ZhyRs8I93fQ==&quot;,
+    &quot;SourceKeyId&quot;: &quot;arn:aws:kms:ap-northeast-1:xxxxxxxxxxxxx:key/a99dd0c2-494f-4650-99ba-811078e86390&quot;,
+    &quot;KeyId&quot;: &quot;arn:aws:kms:ap-northeast-1:xxxxxxxxxxxxx:key/0676925f-cf0f-4dd3-b44e-28019abc4b4f&quot;,
+    &quot;SourceEncryptionAlgorithm&quot;: &quot;SYMMETRIC_DEFAULT&quot;,
+    &quot;DestinationEncryptionAlgorithm&quot;: &quot;SYMMETRIC_DEFAULT&quot;
+}
+</code></pre><p>おーできたー</p>
+<p>CybertextBlobのBase64エンコードを解いてre-encrypted_datakey.binに格納したあと、再暗号化に使用した鍵で複合する。</p>
+<pre><code>$ aws kms decrypt --key-id 0676925f-cf0f-4dd3-b44e-28019abc4b4f --ciphertext-blob fileb://re-encrypted_datakey.bin --output text --query Plaintext|base64 -d &gt;decrypted_datakey.bin
+</code></pre><p>で、オリジナルのハッシュと比較する。</p>
+<pre><code>$ sha256sum datakey.bin decrypted_datakey.bin 
+0ce2033e1f0aff4508ebf82612e59c449d11bf0e5e50a6ac7fc95337989f9b84  datakey.bin
+0ce2033e1f0aff4508ebf82612e59c449d11bf0e5e50a6ac7fc95337989f9b84  decrypted_datakey.bin
+</code></pre><p>一致した。ということで、Data Keyの再暗号化に成功したことがわかる。</p>
+<h2 id="key-aliasの継承">Key aliasの継承</h2>
+<p>鍵のローテーションにより、Key aliasを新しい鍵に継承する必要がある。
+そこで、UpdateAliasオペレーションをつかう。</p>
+<pre><code>$ aws kms update-alias --alias-name alias/aestest --target-key-id 0676925f-cf0f-4dd3-b44e-28019abc4b4f
+</code></pre><p>このオペレーションには、KeyPolicyの他に、<code>kms:UpdateAlias</code> を含むIAMロールが必要なので注意。</p>
+<p>継承が終わったあと、古い鍵はまだ有効であるが、Aliasは削除されている。
+よって、手動の鍵のローテーションは以下の手順が良さそうだ。</p>
+<ol>
+<li>新しい鍵を生成 (CreateKey)</li>
+<li>ローテートする鍵のエイリアスを新しい鍵に継承 (UpdateAlias)</li>
+<li>古い鍵で暗号化したData Keyを新しい鍵で再暗号化 (ReEncrypt)</li>
+<li>古い鍵の削除予約 (ScheduleKeyDeletion)</li>
+</ol>
+<h2 id="まとめ">まとめ</h2>
+<p>KMSの手動によるキーローテーションでは、ReEnclyptオペレーションを使うとData KeyのCMKを変更することができる。古い鍵を有効にしておくこともできるが、鍵一つにつき1USD/monthのキーストレージの使用料金がかかってしまう。また、ローテーションするときには、新しい鍵を生成後、Aliasを新しい鍵に継承したあと、Data Keyの再暗号化処理を行うと良い。</p>
+]]></content>
+		</item>
+		
+		<item>
+			<title>AWS KMSによる、データの暗号化と復号 - 対称鍵編</title>
+			<link>https://www.omoikane.dev/posts/kmsdemo2/</link>
+			<pubDate>Fri, 07 Aug 2020 16:48:41 +0900</pubDate>
+			
+			<guid>https://www.omoikane.dev/posts/kmsdemo2/</guid>
+			<description>対称鍵はかんたん。 鍵の作成 Management ConsoleでもCLIでもお好みで。 以下のパラメータでCMK (Customer Management Key)を作成する。 キーのタイプ: 対称 キーマテ</description>
+			<content type="html"><![CDATA[<p>対称鍵はかんたん。</p>
+<h2 id="鍵の作成">鍵の作成</h2>
+<p>Management ConsoleでもCLIでもお好みで。
+以下のパラメータでCMK (Customer Management Key)を作成する。</p>
+<ul>
+<li>キーのタイプ: <code>対称</code></li>
+<li>キーマテリアルオリジン: <code>KMS</code></li>
+</ul>
+<h2 id="鍵情報の取得">鍵情報の取得</h2>
+<p>CLIで、describe-keyを使って鍵の情報を得る。</p>
+<pre><code>$ aws kms describe-key --key-id alias/aestest
+{
+    &quot;KeyMetadata&quot;: {
+        &quot;AWSAccountId&quot;: &quot;xxxxxxxxxxxxx&quot;,
+        &quot;KeyId&quot;: &quot;a99dd0c2-494f-4650-99ba-811078e86390&quot;,
+        &quot;Arn&quot;: &quot;arn:aws:kms:ap-northeast-1:xxxxxxxxxxxxx:key/a99dd0c2-494f-4650-99ba-811078e86390&quot;,
+        &quot;CreationDate&quot;: 1596705473.686,
+        &quot;Enabled&quot;: true,
+        &quot;Description&quot;: &quot;&quot;,
+        &quot;KeyUsage&quot;: &quot;ENCRYPT_DECRYPT&quot;,
+        &quot;KeyState&quot;: &quot;Enabled&quot;,
+        &quot;Origin&quot;: &quot;AWS_KMS&quot;,
+        &quot;KeyManager&quot;: &quot;CUSTOMER&quot;,
+        &quot;CustomerMasterKeySpec&quot;: &quot;SYMMETRIC_DEFAULT&quot;,
+        &quot;EncryptionAlgorithms&quot;: [
+            &quot;SYMMETRIC_DEFAULT&quot;
+        ]
+    }
+}
+</code></pre><h2 id="data-keyの取得">Data Keyの取得</h2>
+<p>generate-data-keyで、平文のData Keyと暗号化されたData Keyが落ちてくる。</p>
+<pre><code>$ aws kms generate-data-key --key-id alias/aestest --key-spec AES_256
+{
+    &quot;CiphertextBlob&quot;: &quot;AQIDAHizJ7k8Iy6GrPV/ExEn64vrdh6dhDbGez4hVZW2oP6C1gFj7ZyUbuDUX6..&quot;,
+    &quot;KeyId&quot;: &quot;arn:aws:kms:ap-northeast-1:xxxxxxxxxxxxx:key/a99dd0c2-494f-4650-99ba-811078e86390&quot;
+}
+</code></pre><p>CiphertextBlobは復号時に必要になるので、DynamoDB等で別途管理する。
+平文のData Key(Plaintext)をdatakeyに格納し、この鍵を使って、データを暗号化する。</p>
+<h2 id="データの暗号化">データの暗号化</h2>
+<p>平文のData Keyを使って普通に暗号化する。</p>
+<pre><code>openssl aes-256-cbc -e -\
+    in plain_data \
+    -pass file:plain_datakey \
+    -out encrypted_data \
+    -pbkdf2
+</code></pre><p>暗号化が終わったら、平文のData Keyは<strong>必ず</strong>削除すること。
+これを怠るとKMSを使う意味がない。</p>
+<h2 id="データの復号">データの復号</h2>
+<p>別途管理していた、暗号化されたData Keyをkmsで復号して、Data Keyを取得する。
+暗号化されたData Keyが、Base64エンコードされてencrypted_datakey.txtに格納されていた場合、
+base64デコード後、kmsを使ってData Keyを復号する。</p>
+<pre><code>$ base64 -d encrypted_datakey.txt &gt;encrypted_datakey
+$  aws kms decrypt --key-id alias/aestest \
+    --ciphertext-blob fileb://encrypted_datakey \
+    --output text --query Plaintext | base64 -d &gt;decrypted_datakey
+</code></pre><p>Data Keyが、decrypted_datakeyに格納されたので、データが復号できる。</p>
+<pre><code>$ openssl aes-256-cbc -d \
+    -in encrypted_data \
+    -out decrypted_data \
+    --pass file:decrypted_datakey \
+    -pbkdf2
+</code></pre><pre><code>$ sha256sum plain_data.bin decrypted_data.bin 
+5678c5a7a63f910c6eb172ebb3736b73099b8d62172c6b42034d87b7bf30b107  plain_data
+5678c5a7a63f910c6eb172ebb3736b73099b8d62172c6b42034d87b7bf30b107  decrypted_data
+</code></pre><p>一致した。復号が成功したことがわかる。</p>
+<p>Have Fun!</p>
+]]></content>
+		</item>
+		
+		<item>
+			<title>AWS KMSによる、データの暗号化と復号 - 非対称鍵（RSA_4096）編</title>
+			<link>https://www.omoikane.dev/posts/kmsdemo1/</link>
+			<pubDate>Fri, 07 Aug 2020 16:41:49 +0900</pubDate>
+			
+			<guid>https://www.omoikane.dev/posts/kmsdemo1/</guid>
+			<description>AWS KMSでを使ったデータの暗号化、復号の検証も行った。 対称鍵の検証は、別記事にした。 鍵の作成 Management ConsoleでもCLIでもお好みで。 以下のパ</description>
+			<content type="html"><![CDATA[<p>AWS KMSでを使ったデータの暗号化、復号の検証も行った。
+対称鍵の検証は、<a href="../kmsdemo2">別記事</a>にした。</p>
+<h2 id="鍵の作成">鍵の作成</h2>
+<p>Management ConsoleでもCLIでもお好みで。
+以下のパラメータでCMK (Customer Management Key)を作成する。</p>
+<ul>
+<li>キーのタイプ: <code>非対称</code></li>
+<li>キーの使用: <code>暗号化および復号化</code></li>
+<li>キーの仕様: <code>RSA_4098</code></li>
+<li>Alias: <code>rsatest</code></li>
+</ul>
+<h2 id="鍵情報の取得">鍵情報の取得</h2>
+<p>CLIで、describe-keyを使って鍵の情報を得る。</p>
+<pre><code> aws kms describe-key --key-id alias/rsatest
+{
+    &quot;KeyMetadata&quot;: {
+        &quot;AWSAccountId&quot;: &quot;xxxxxxxxxxxxx&quot;,
+        &quot;KeyId&quot;: &quot;0192e16e-01ed-4d84-84a5-5144259766f2&quot;,
+        &quot;Arn&quot;: &quot;arn:aws:kms:ap-northeast-1:xxxxxxxxxxxxx:key/0192e16e-01ed-4d84-84a5-5144259766f2&quot;,
+        &quot;CreationDate&quot;: 1596690475.888,
+        &quot;Enabled&quot;: true,
+        &quot;Description&quot;: &quot;&quot;,
+        &quot;KeyUsage&quot;: &quot;ENCRYPT_DECRYPT&quot;,
+        &quot;KeyState&quot;: &quot;Enabled&quot;,
+        &quot;Origin&quot;: &quot;AWS_KMS&quot;,
+        &quot;KeyManager&quot;: &quot;CUSTOMER&quot;,
+        &quot;CustomerMasterKeySpec&quot;: &quot;RSA_4096&quot;,
+        &quot;EncryptionAlgorithms&quot;: [
+            &quot;RSAES_OAEP_SHA_1&quot;,
+            &quot;RSAES_OAEP_SHA_256&quot;
+        ]
+    }
+}
+</code></pre><h2 id="公開鍵の取得">公開鍵の取得</h2>
+<p>4096bitの鍵長をもつRSA鍵ペアができている。
+秘密鍵を取り出すことはできないが、公開鍵は取り出せる。</p>
+<pre><code> aws kms get-public-key --key-id alias/rsatest
+{
+    &quot;KeyId&quot;: &quot;arn:aws:kms:ap-northeast-1:xxxxxxxxxxxxx:key/0192e16e-01ed-4d84-84a5-5144259766f2&quot;,
+    &quot;PublicKey&quot;: &quot;MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA6u875H89mRNP7PLH6+QGEhPUIga6jrssgmLnC/98KGXfZx/jHYPH2oJw0uedA0uuu3wUbubduy8rYd+5LfQUiLoK+2cjOHp/u2xbKruDmZtVM68YNWBnYwp8bZ9y7c2VWblBgu0WPWa1NFGMi2reXcqDHppvzy15lv5kYYrfKKjabbluPOSDYYp4Hsw8Dmd/6tvc7zw1L+Qa4uyK/ojp05WPSVmlaUMuKopzr3ngD/sEKwQ1BmA0dWGzTUZTtOAQusSlLN7tCoLNLWKS1ZDfZJKbiVBLbErGiyLRhGt7MaXgB95O+Xh9wgdiCHFZ/S2ji68VCXEfrTomcy63kdctM7EmNWhgnBHGBgxelQSG9gwqCBciKBkVuCP594N3xVjN2T1DgbsMaznfN8+P03gfvOqwtD8LVXS87JuVAJb3iBm5hfH5m+/NL8vSZ9itamPPDVNG8hBnl2ZUCK2wZBMzw2djRIyUAe+9N1NwzoYTSNlsWC5KJTH5yIat99v3IRAhHMugwfaaKmpUauLdPxQf2vI4wLE/ZNGYR4f9IhPgs1VEpxVGYge198YPbeDzEdbTUIGMDR7kCTSXrt5JZRW/40RX/Rh6qq12Jo55TC6PVaGtMcLjz7LYiMdgeBZq4/TV6EbovuEo/x5MNyVMpWjR4o45LqQuw8983c++55zFju0CAwEAAQ==&quot;,
+    &quot;CustomerMasterKeySpec&quot;: &quot;RSA_4096&quot;,
+    &quot;KeyUsage&quot;: &quot;ENCRYPT_DECRYPT&quot;,
+    &quot;EncryptionAlgorithms&quot;: [
+        &quot;RSAES_OAEP_SHA_1&quot;,
+        &quot;RSAES_OAEP_SHA_256&quot;
+    ]
+}
+</code></pre><p>JSON形式では使いにくいので、Base64エンコードを解いてDERに変換する。</p>
+<pre><code>$ aws kms get-public-key \
+	--key-id alias/rsatest \
+	--output text --query PublicKey|base64 -d &gt;pubkey.der
+</code></pre><p>pubkey.derが生成される。</p>
+<h2 id="データの暗号化">データの暗号化</h2>
+<p>kmsでは、4kByteまでしかデータを暗号化および復号ができない。そのため暗号化および復号に使用する鍵を独自に生成する。
+この鍵をData Keyと呼ぶ。このData KeyをKMSで作成した鍵で暗号化し、別途DynamoDBなどで管理する。
+これによりkmsでData Keyを復号する権限のないユーザにデータの復号はできなくなる。
+鍵の管理については本稿では触れない。</p>
+<h3 id="data-keyの生成">Data Keyの生成</h3>
+<p>データの暗号化アルゴリズムはお好みで。今回はAES256-CBCにしよう。まずは、opensslで鍵を生成する。</p>
+<pre><code>$ openssl rand -out datakey 32
+</code></pre><h3 id="data-keyの暗号化">Data Keyの暗号化</h3>
+<h4 id="opensslを使用する場合">OpenSSLを使用する場合</h4>
+<p>Data Keyをkmsで生成したCMKで暗号化する。さきほど取得した公開鍵で暗号化する。
+kmsで復号できるアルゴリズムは限られているので注意が必要である。
+データを復号するときには、kmsに暗号化したData Keyを復号してもらわなければならない。
+そのため、kmsが復号できるアルゴリズムを使用する必要がある。</p>
+<p>サポートしているアルゴリズムは、described-keyで取得できる。
+今回の場合は、<code>RSAES_OAEP_SHA_1</code>と<code>RSAES_OAEP_SHA_256</code>の二種類である。</p>
+<p>ということで、今回は、<code>RSAES_OAEP_SHA_256</code>でData Keyを暗号化する。</p>
+<pre><code>$ openssl pkeyutl -encrypt \
+    -pubin -inkey pubkey.der -keyform DER \
+    -in datakey \
+    -out encrypted_datakey \
+    -pkeyopt rsa_padding_mode:oaep \
+    -pkeyopt rsa_oaep_md:sha256
+</code></pre><p>一応、ちゃんとkmsで復号できるか確認しておこう。</p>
+<pre><code>$ aws kms decrypt \
+    --ciphertext-blob fileb://encrypted_datakey \
+    --key-id alias/rsatest \
+    --encryption-algorithm RSAES_OAEP_SHA_256 \
+    --output text --query Plaintext | base64 -d &gt;decrypted_datakey
+</code></pre><p>kmsで復号されたData keyは、decrypted_datakeyに格納された。
+暗号化前のData keyと復号されたData keyのHashを比較する。</p>
+<pre><code>$  sha256sum datakey decrypted_datakey 
+0b9d181063f1e4ace5ac59e1253186406b27fb1ffd0c22bb1a62ffa2515f6803  datakey
+0b9d181063f1e4ace5ac59e1253186406b27fb1ffd0c22bb1a62ffa2515f6803  decrypted_datakey
+</code></pre><p>一致した。復号に成功していることが確認できた。</p>
+<h4 id="kmsにおまかせする場合">kmsにおまかせする場合</h4>
+<p>上記の例では、opensslコマンドを使ったが、もちろんkmsに任せることもできる。
+こっちのほうが簡単か。ただAPI利用料がかかる。</p>
+<pre><code> $ aws kms encrypt --key-id alias/rsatest \
+    --plaintext fileb://datakey \
+    --encryption-algorithm RSAES_OAEP_SHA_256
+{
+    &quot;CiphertextBlob&quot;: &quot;ZAo40r0pQ3COzELKzM8mJMFNbHno4jUiyzeuZ6rQVUH0ZLsIJbdESnhl....&quot;,
+    &quot;KeyId&quot;: &quot;arn:aws:kms:ap-northeast-1:xxxxxxxxxxxxx:key/0192e16e-01ed-4d84-84a5-5144259766f2&quot;,
+    &quot;EncryptionAlgorithm&quot;: &quot;RSAES_OAEP_SHA_256&quot;
+}
+</code></pre><h2 id="データの暗号化-1">データの暗号化</h2>
+<p>データを暗号化する。これは普通にopensslで</p>
+<pre><code>$ openssl aes-256-cbc -e \
+    -in plain_data.bin \
+    -out encrypted_data.bin
+    -pass file:datakey \
+    -pbkdf2
+</code></pre><p>暗号化したら、暗号化に使用したData Keyを削除する。
+これを忘れるとkmsを使う意味がまったくなくなってしまう。</p>
+<pre><code>$ rm datakey
+</code></pre><h2 id="データの復号">データの復号</h2>
+<p>データを復号するには、まず暗号化されたData Keyを復号する。</p>
+<pre><code>$ aws kms decrypt \
+    --ciphertext-blob fileb://encrypted_datakey \
+    --key-id alias/rsatest \
+    --encryption-algorithm RSAES_OAEP_SHA_256 \
+    --output text --query Plaintext | base64 -d &gt;decrypted_datakey
+</code></pre><p>そして、データを復号する。</p>
+<pre><code>$ openssl aes-256-cbc -d \
+    -in encrypted_data.bin \
+    -out decrypted_data \
+    -pass file:./decrypted_datakey \
+    -pbkdf2
+</code></pre><p>復号できたデータは、decrypted_dataに格納されている。
+確認のため、平文のデータのHashと比較する。</p>
+<pre><code>$ sha256sum plain_data.bin decrypted_data.bin 
+5678c5a7a63f910c6eb172ebb3736b73099b8d62172c6b42034d87b7bf30b107  plain_data.bin
+5678c5a7a63f910c6eb172ebb3736b73099b8d62172c6b42034d87b7bf30b107  decrypted_data.bin
+</code></pre><p>一致した。復号が成功したことがわかる。</p>
+<p>Have Fun!</p>
+]]></content>
+		</item>
 		
 		<item>
 			<title>中国製の顕微鏡画像をLinux PCに取り込む方法</title>
@@ -364,7 +677,7 @@ Allow root ssh login? (yes, no, prohibit-password) [no]
 <h3 id="19-パーティションの設定">1.9 パーティションの設定</h3>
 <pre><code>Available disks are: sd0 sd1
 Which disk is the root disk? ('?' for details)[sd0]
-</code></pre><p>OpenBSDをインストールするディスクを指定する。'?&lsquo;を入力するとsd0,sd1が何を指しているかが表示される。
+</code></pre><p>OpenBSDをインストールするディスクを指定する。&rsquo;?&lsquo;を入力するとsd0,sd1が何を指しているかが表示される。
 私のPCの場合、sd0がハードディスクで、sd1がUSBメモリだった。</p>
 <p>インストールするディスクを指定すると、指定したディスクのパーティションテーブルが表示され、その後に</p>
 <pre><code>Use (W)hole disk MBR, whole disk (G)PT, or (E)dit? [W]
