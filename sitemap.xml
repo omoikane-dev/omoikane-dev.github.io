@@ -3,6 +3,31 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://www.omoikane.dev/</loc>
+    <lastmod>2020-08-15T17:23:47+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://www.omoikane.dev/posts/</loc>
+    <lastmod>2020-08-15T17:23:47+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://www.omoikane.dev/tags/</loc>
+    <lastmod>2020-08-15T17:23:47+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://www.omoikane.dev/tags/test/</loc>
+    <lastmod>2020-08-15T17:23:47+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://www.omoikane.dev/posts/mathtest/</loc>
+    <lastmod>2020-08-15T17:23:47+09:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://www.omoikane.dev/tags/aws/</loc>
     <lastmod>2020-08-07T16:50:59+09:00</lastmod>
   </url>
@@ -14,21 +39,6 @@
   
   <url>
     <loc>https://www.omoikane.dev/tags/kms/</loc>
-    <lastmod>2020-08-07T16:50:59+09:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://www.omoikane.dev/</loc>
-    <lastmod>2020-08-07T16:50:59+09:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://www.omoikane.dev/posts/</loc>
-    <lastmod>2020-08-07T16:50:59+09:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://www.omoikane.dev/tags/</loc>
     <lastmod>2020-08-07T16:50:59+09:00</lastmod>
   </url>
   
