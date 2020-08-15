@@ -15,11 +15,17 @@
 			<pubDate>Sat, 15 Aug 2020 17:23:47 +0900</pubDate>
 			
 			<guid>https://www.omoikane.dev/posts/mathtest/</guid>
-			<description>HugoのThemeをアップデートして、\(\KaTeX\) を使った数式をレンダリングできるようにしたのでテスト。 \[ f(x)= \frac{1}{3} \]</description>
-			<content type="html"><![CDATA[<p>HugoのThemeをアップデートして、\(\KaTeX\) を使った数式をレンダリングできるようにしたのでテスト。</p>
+			<description>HugoのThemeをアップデートして、$\KaTeX$ を使った数式をレンダリングできるようにしたのでテスト。 \[ e^{i\pi} + 1 = 0 \] ふむ。 \[ \begin{aligned}\nabla \cdot \mathbf{B} &amp;amp;=</description>
+			<content type="html"><![CDATA[<p>HugoのThemeをアップデートして、$\KaTeX$ を使った数式をレンダリングできるようにしたのでテスト。</p>
 <p>\[
-f(x)= \frac{1}{3}
+e^{i\pi} + 1 = 0
 \]</p>
+<p>ふむ。</p>
+<p>\[
+\begin{aligned}\nabla \cdot \mathbf{B} &amp;= 0\\  \nabla \times \mathbf{E} &amp;= -\frac{\partial\mathbf{E}}{\partial t}\\ \nabla \cdot \mathbf{D} &amp;= \rho\\ \nabla \times \mathbf{H}  &amp;= \mathbf{j} + \frac{\partial \mathbf{D}}{\partial t}
+\end{aligned}
+\]</p>
+<p>式の整列もできてる。フォントもきれい。</p>
 ]]></content>
 		</item>
 		
