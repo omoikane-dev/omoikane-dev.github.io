@@ -7,10 +7,37 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Sat, 15 Aug 2020 17:23:47 +0900</lastBuildDate>
+    <lastBuildDate>Sun, 16 Aug 2020 03:50:29 +0900</lastBuildDate>
     
 	<atom:link href="https://www.omoikane.dev/tags/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>FSK</title>
+      <link>https://www.omoikane.dev/tags/fsk/</link>
+      <pubDate>Sun, 16 Aug 2020 03:50:29 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/tags/fsk/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>GNURadio</title>
+      <link>https://www.omoikane.dev/tags/gnuradio/</link>
+      <pubDate>Sun, 16 Aug 2020 03:50:29 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/tags/gnuradio/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>SDR</title>
+      <link>https://www.omoikane.dev/tags/sdr/</link>
+      <pubDate>Sun, 16 Aug 2020 03:50:29 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/tags/sdr/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>test</title>
@@ -72,33 +99,6 @@
       <pubDate>Sat, 07 Dec 2019 00:00:00 +0900</pubDate>
       
       <guid>https://www.omoikane.dev/tags/gis/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>OpenBSD</title>
-      <link>https://www.omoikane.dev/tags/openbsd/</link>
-      <pubDate>Sat, 08 Jun 2019 21:24:29 +0900</pubDate>
-      
-      <guid>https://www.omoikane.dev/tags/openbsd/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>C&#43;&#43;</title>
-      <link>https://www.omoikane.dev/tags/c&#43;&#43;/</link>
-      <pubDate>Sat, 11 May 2019 22:03:29 +0900</pubDate>
-      
-      <guid>https://www.omoikane.dev/tags/c&#43;&#43;/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>oat&#43;&#43;</title>
-      <link>https://www.omoikane.dev/tags/oat&#43;&#43;/</link>
-      <pubDate>Sat, 11 May 2019 22:03:29 +0900</pubDate>
-      
-      <guid>https://www.omoikane.dev/tags/oat&#43;&#43;/</guid>
       <description></description>
     </item>
     

@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Sat, 15 Aug 2020 17:23:47 +0900</lastBuildDate>
+    <lastBuildDate>Sun, 16 Aug 2020 03:50:29 +0900</lastBuildDate>
     
 	<atom:link href="https://www.omoikane.dev/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>GNURadio QuadratureDemodブロックのアルゴリズム</title>
+      <link>https://www.omoikane.dev/posts/algorithm-of-quadraturedemod/</link>
+      <pubDate>Sun, 16 Aug 2020 03:50:29 +0900</pubDate>
+      
+      <guid>https://www.omoikane.dev/posts/algorithm-of-quadraturedemod/</guid>
+      <description>TL;DR FSKをGNURadioで復調する時に使う、QuadratureDemodブロックは、$n$番目のサンプリングで得られたI/Q値を \[ \begin{aligned} x_n &amp;amp;=</description>
+    </item>
     
     <item>
       <title>数式のテスト</title>
@@ -27,7 +36,7 @@
       <pubDate>Fri, 07 Aug 2020 16:50:59 +0900</pubDate>
       
       <guid>https://www.omoikane.dev/posts/kmskeyrotation/</guid>
-      <description>TLDR あるAWS Security関連の教科書に、KMSの手動ローテーションは、鍵を新規作成して 古い鍵を削除する旨の記述があり、「古い鍵を削除した</description>
+      <description>TL;DR あるAWS Security関連の教科書に、KMSの手動ローテーションは、鍵を新規作成して 古い鍵を削除する旨の記述があり、「古い鍵を削除した</description>
     </item>
     
     <item>
@@ -72,7 +81,7 @@
       <pubDate>Sat, 08 Jun 2019 21:24:29 +0900</pubDate>
       
       <guid>https://www.omoikane.dev/posts/install-openbsd65/</guid>
-      <description>TLDR; OpenBSDのインストール記事が少ないということで、ちょうど6.5がリリースされたのでインストール記事を書いておく。 と思ったら、「Ope</description>
+      <description>TL;DR OpenBSDのインストール記事が少ないということで、ちょうど6.5がリリースされたのでインストール記事を書いておく。 と思ったら、「Ope</description>
     </item>
     
     <item>
@@ -91,15 +100,6 @@
       
       <guid>https://www.omoikane.dev/posts/oat&#43;&#43;/</guid>
       <description>大きめのデータ（といっても100万点のオーダだけど）を扱うWebアプリを作りたいのだが Pythonだと遅いので、C++で書きたい。 ということ</description>
-    </item>
-    
-    <item>
-      <title>OpenBSD6.4をインストールしたVPSでIPv6を使う際の注意</title>
-      <link>https://www.omoikane.dev/posts/openbsd-ipv6-sakura/</link>
-      <pubDate>Wed, 17 Apr 2019 23:03:29 +0900</pubDate>
-      
-      <guid>https://www.omoikane.dev/posts/openbsd-ipv6-sakura/</guid>
-      <description>TL;DR OpenBSD 6.4をインストールしたVPSでIPv6のデフォルトゲートウェイに接続できない時は、 SIIを無効にすること。例えば、さくらインターネット</description>
     </item>
     
   </channel>

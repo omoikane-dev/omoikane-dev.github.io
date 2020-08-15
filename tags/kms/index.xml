@@ -18,7 +18,7 @@
       <pubDate>Fri, 07 Aug 2020 16:50:59 +0900</pubDate>
       
       <guid>https://www.omoikane.dev/posts/kmskeyrotation/</guid>
-      <description>TLDR あるAWS Security関連の教科書に、KMSの手動ローテーションは、鍵を新規作成して 古い鍵を削除する旨の記述があり、「古い鍵を削除した</description>
+      <description>TL;DR あるAWS Security関連の教科書に、KMSの手動ローテーションは、鍵を新規作成して 古い鍵を削除する旨の記述があり、「古い鍵を削除した</description>
     </item>
     
     <item>
